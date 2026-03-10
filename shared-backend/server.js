@@ -58,6 +58,12 @@ app.post('/api/join-waitlist', async (req, res) => {
 app.get('/api/waitlist/:projectName', async (req, res) => {
   try {
     const { projectName } = req.params;
+    const authHeader = req.headers['x-admin-key'];
+    
+    // Require admin key for security
+    if (authHeader !== process.env.ADMIN_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     
     const result = await pool.query(
       'SELECT email, created_at FROM waitlist WHERE project_name = $1 ORDER BY created_at DESC',
