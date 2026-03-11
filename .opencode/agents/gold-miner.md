@@ -22,7 +22,11 @@ permission:
     "npm *": allow
     "docker *": deny
   task:
-    "reddit-researcher": allow
+    "landing-page-designer": allow
+    "landing-page-developer": allow
+    "data-collector": allow
+    "analysis-agent": allow
+    "critique-agent": allow
 ---
 
 # Gold Mining Framework Agent
@@ -44,30 +48,97 @@ curl -H "Authorization: Bearer $RESEND_API_KEY" ...
 gh auth login --with-token <<< $GITHUB_TOKEN
 ```
 
-## Subagent: Reddit Research
+## Subagent Pipeline: Data → Analysis → Critique
 
-Use the **@reddit-researcher** subagent to gather deep Reddit pain points. This agent is specialized in:
+Use the three specialized agents in sequence for rigorous market research:
 
-- Finding relevant subreddits
-- Collecting high-engagement posts (50+)
-- Extracting pain points with direct quotes
-- Identifying business opportunities
+### 1. Data Collector (@data-collector)
 
-**Invoke it like this:**
+Collects raw Reddit posts and comments. Specialized in:
+
+- Identifying relevant subreddits
+- Strategic search terms
+- Using the CLI scraper tool
+- Quality filtering (score thresholds)
+
+**Invoke it:**
 
 ```
-@reddit-researcher Research the chronic pain market niche - find the top 10 pain points people discuss on Reddit
+@data-collector Collect Reddit data for the "[NICHE]" niche. Focus on subreddits: [list], search terms: [list]. Output: 01_raw_data.md
 ```
 
-## Your Mission
+### 2. Analysis Agent (@analysis-agent)
 
-Execute the complete Gold Mining Framework workflow autonomously:
+Analyzes collected data using thematic analysis and JTBD framework. Specialized in:
 
-1. Select a random market niche (Health, Wealth, or Relationships)
-2. Validate with Google Trends
-3. **Use @reddit-researcher** to gather deep Reddit pain points
-4. Process into structured business opportunities
-5. Generate and deploy a landing page with waitlist to Dokploy
+- Braun & Clarke thematic analysis methodology
+- Customer journey mapping
+- Business opportunity identification
+
+**Invoke it:**
+
+```
+@analysis-agent Analyze the collected data in 01_raw_data.md. Apply the methodology from reddit-researcher-framework.md. Output: 02_analysis.md
+```
+
+### 3. Critique Agent (@critique-agent)
+
+Reviews and validates the analysis for rigor and gaps. Specialized in:
+
+- Evidence quality assessment
+- Framework application verification
+- Opportunity rigor checking
+
+**Invoke it:**
+
+```
+@critique-agent Review the analysis in 02_analysis.md against the raw data in 01_raw_data.md. Output: 03_critique.md
+```
+
+## Subagent: Landing Page Designer
+
+Use the **@landing-page-designer** subagent to create the design brief and copy. This agent specializes in:
+
+- Reading market analysis (02_analysis.md)
+- Theme selection based on audience psychology
+- Writing copy using exact pain point quotes
+- Creating a complete design brief for developers
+
+**Invoke it:**
+
+```
+@landing-page-designer Create a design brief for [App Name] - [brief description].
+```
+
+The designer will read 02_analysis.md automatically and output a complete design brief.
+
+## Subagent: Landing Page Developer
+
+Use the **@landing-page-developer** subagent to implement the design brief as code. This agent specializes in:
+
+- Creating Astro + Tailwind projects from design briefs
+- Implementing exact copy from the brief
+- Setting up waitlist forms connected to shared backend
+- Providing complete, deployable code
+
+**Invoke it AFTER the designer:**
+
+```
+@landing-page-developer Create a landing page using the design brief in ./04_design_brief.md
+```
+
+## Two-Step Flow
+
+1. First invoke **@landing-page-designer** — they write the design brief to `./04_design_brief.md`
+2. Then invoke **@landing-page-developer** — they read `./04_design_brief.md` and implement the code
+
+**Example full invocation:**
+
+```
+@landing-page-designer Create a design brief for a chronic pain support app. The app helps people with chronic pain track symptoms and find empathetic doctors.
+
+@landing-page-developer Create a landing page using ./04_design_brief.md
+```
 
 ## Core Markets
 
@@ -86,45 +157,6 @@ python3 -c "import random; markets = ['Health', 'Wealth', 'Relationships']; prin
 ```
 
 Then drill down into sub-niches using the hierarchy: Core Market → Sub-niche → Specific Problem Area
-
-## Reddit Data Collection
-
-### Critical Setup (NixOS/Externally Managed Python)
-
-On NixOS or externally managed Python environments, you MUST create a project-specific virtual environment first:
-
-```bash
-cd /path/to/project
-mkdir -p .venv
-python3 -m venv .venv
-source .venv/bin/activate
-uv pip install praw python-dotenv requests
-```
-
-If you skip the venv creation, you'll get `ModuleNotFoundError: No module named 'praw'`.
-
-### Script Template
-
-```python
-import os
-import praw
-from dotenv import load_dotenv
-
-load_dotenv("/path/to/.env")  # Must provide explicit path
-
-reddit = praw.Reddit(
-    client_id=os.getenv("REDDIT_CLIENT_ID"),
-    client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
-    user_agent=os.getenv("REDDIT_USER_AGENT")
-)
-
-subreddit = reddit.subreddit("friendship+adulting+socialskills")
-for post in subreddit.search("your search term", limit=10):
-    print(f"Title: {post.title}")
-    print(f"Score: {post.score}, Comments: {post.num_comments}")
-```
-
-Collect at least 20-50 posts with full comment data for comprehensive pain point analysis.
 
 ## Architecture: Shared Backend + Multiple Frontends
 
@@ -154,20 +186,7 @@ curl -X POST "https://aitbytes.dev/api/trpc/application.update" \
 
 **Important**: When setting multiple env vars, separate them with `\n` (newlines).
 
-### Frontend-Only Landing Pages
-
-Each landing page is a static HTML/CSS/JS site that calls the shared backend API.
-
-**Landing page structure:**
-
-```
-app-name/
-├── index.html      # Landing page with waitlist form
-├── styles.css      # Custom styles
-├── script.js       # Frontend JS (calls shared API)
-├── Dockerfile      # Nginx for serving static files
-└── .env            # Only contains APP_NAME
-```
+**Landing pages are deployed as separate frontends that call the shared backend API.** The developer agent handles the implementation details.
 
 ## GitHub CLI
 
@@ -320,66 +339,20 @@ response = requests.post(f"{url}/api/trpc/domain.update", headers=headers, json=
 9. **Dokploy domain is .dev TLD**: Use `aitbytes.dev` not `.com`
 10. **Shared Backend URL**: Always use `https://api-goldmine.aitbytes.dev` for waitlist API
 
-## Frontend Landing Page Template
-
-### Dockerfile (Nginx)
-
-```dockerfile
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY index.html ./
-COPY styles.css ./
-COPY script.js ./
-
-FROM nginx:alpine
-COPY --from=builder /app /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
-
-### script.js (Calls Shared Backend)
-
-```javascript
-const API_URL = "https://api-goldmine.aitbytes.dev";
-
-async function joinWaitlist(email, projectName) {
-  const response = await fetch(`${API_URL}/api/join-waitlist`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: email,
-      projectName: projectName || "default",
-    }),
-  });
-
-  if (response.ok) {
-    showSuccess();
-  } else {
-    const error = await response.json();
-    showError(error.error || "Something went wrong");
-  }
-}
-```
-
-### .env (Per App)
-
-```
-APP_NAME=AppName
-RESEND_AUDIENCE_ID=resend-audience-id
-```
-
 ## Workflow Execution
 
 When invoked, execute these steps in order:
 
 1. **Select Market**: Use random module to pick from Health/Wealth/Relationships, then drill into sub-niche
 2. **Validate**: Check Google Trends for search volume and trend stability
-3. **Gather Data**: Invoke **@reddit-researcher** subagent to collect 50+ posts with comments from relevant subreddits
-4. **Process Data**: Extract top 10 pain points with quoted evidence (already done by subagent)
-5. **Generate Ideas**: Create 5 business opportunities from pain points
-6. **Create Landing Page**: Build static HTML/CSS/JS that calls shared backend API (pass projectName in body)
-7. **Deploy Frontend**: Create GitHub repo, Dokploy app, deploy (no env vars needed)
-8. **Configure Domain**: Create domain entry and enable HTTPS
+3. **Collect Data**: Invoke **@data-collector** to gather Reddit posts → `01_raw_data.md`
+4. **Analyze**: Invoke **@analysis-agent** to extract themes and opportunities → `02_analysis.md`
+5. **Critique**: Invoke **@critique-agent** to validate analysis → `03_critique.md`
+6. **Review**: Check 03_critique.md - if REVISIONS NEEDED, iterate
+7. **Design Brief**: Invoke **@landing-page-designer** with the approved opportunity from `02_analysis.md`
+8. **Build Landing Page**: Invoke **@landing-page-developer** with the design brief from step 7
+9. **Deploy Frontend**: Create GitHub repo, Dokploy app, deploy (no env vars needed)
+10. **Configure Domain**: Create domain entry and enable HTTPS
 
 Return a summary of what was created, including the deployed URL.
 
