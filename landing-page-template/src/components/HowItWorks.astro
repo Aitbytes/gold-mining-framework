@@ -1,0 +1,91 @@
+---
+// ─── HowItWorks — BOILERPLATE (do not modify per project) ────────────────────
+// Pass an array of {step, title, outcome} objects as the `steps` prop.
+//
+// Usage in index.astro:
+//
+//   import HowItWorks from '../components/HowItWorks.astro';
+//
+//   const steps = [
+//     {
+//       step: "Step Name",
+//       title: "Optional subtitle",       // optional — omit if not needed
+//       outcome: "What the user gains after completing this step.",
+//     },
+//     ...
+//   ];
+//
+//   <HowItWorks steps={steps} />
+//
+// Note: `step` is the step name/label shown as the card heading.
+//       `title` is an optional subtitle (shown smaller, below heading).
+//       `outcome` is the benefit/result paragraph.
+//
+// Optional props:
+//   sectionTitle — section heading (default: "How It Works")
+//   bgClass      — Tailwind background class (default: "bg-white")
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface Step {
+  step: string;
+  title?: string;
+  outcome: string;
+}
+
+interface Props {
+  steps: Step[];
+  sectionTitle?: string;
+  bgClass?: string;
+}
+
+const {
+  steps,
+  sectionTitle = "How It Works",
+  bgClass = "bg-white",
+} = Astro.props;
+---
+
+<section id="how-it-works" class={`py-16 sm:py-24 px-4 ${bgClass}`}>
+  <div class="max-w-6xl mx-auto">
+    <h2 class="font-heading text-3xl sm:text-4xl font-bold text-primary text-center mb-12 sm:mb-16">
+      {sectionTitle}
+    </h2>
+
+    <div class="grid sm:grid-cols-3 gap-8 sm:gap-12 relative">
+      <!-- Connecting line on desktop (purely decorative) -->
+      <div
+        class="hidden sm:block absolute top-8 left-[calc(16.67%+2rem)] right-[calc(16.67%+2rem)] h-px bg-accent/20"
+        aria-hidden="true"
+      ></div>
+
+      {steps.map((item, index) => (
+        <div class="text-center relative">
+          <!-- Step number bubble -->
+          <div class="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
+            <span class="text-2xl font-bold text-accent" aria-hidden="true">
+              {index + 1}
+            </span>
+          </div>
+
+          <!-- Step name (heading) -->
+          <h3 class="font-heading text-xl font-semibold text-primary mb-2">
+            {item.step}
+          </h3>
+
+          <!-- Optional subtitle -->
+          {item.title && (
+            <p class="text-sm font-medium text-accent mb-3">{item.title}</p>
+          )}
+
+          <!-- Divider -->
+          <div class="w-10 h-0.5 bg-accent/40 mx-auto mb-4" aria-hidden="true"></div>
+
+          <!-- Outcome -->
+          <p class="text-text-muted leading-relaxed text-sm sm:text-base">
+            {item.outcome}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

@@ -24,9 +24,11 @@ permission:
   task:
     "landing-page-designer": allow
     "landing-page-developer": allow
+    "copywriter": allow
     "data-collector": allow
     "analysis-agent": allow
     "critique-agent": allow
+    "ideation-agent": allow
 ---
 
 # Gold Mining Framework Agent
@@ -95,22 +97,55 @@ Reviews and validates the analysis for rigor and gaps. Specialized in:
 @critique-agent Review the analysis in 02_analysis.md against the raw data in 01_raw_data.md. Output: 03_critique.md
 ```
 
-## Subagent: Landing Page Designer
+### 4. Ideation Agent (@ideation-agent)
 
-Use the **@landing-page-designer** subagent to create the design brief and copy. This agent specializes in:
+Generates, evaluates, and improves business ideas using proven startup frameworks. Specialized in:
+
+- Generating multiple ideas per pain point
+- "Should I Build This?" scoring framework
+- Y Combinator criteria validation
+- Competition research and differentiation
+
+**Invoke it AFTER analysis, BEFORE copywriter:**
+
+```
+@ideation-agent Generate business ideas from the analysis in 02_analysis.md. Use the pain points to create 5+ scored ideas. Output: 02_ideas.md
+```
+
+The ideation agent will read 02_analysis.md, generate multiple business ideas, score them using the "Should I Build This?" framework, and output scored ideas to `./02_ideas.md`.
+
+## Subagent: Copywriter
+
+Use the **@copywriter** subagent to write the landing page copy. This agent specializes in:
 
 - Reading market analysis (02_analysis.md)
-- Theme selection based on audience psychology
-- Writing copy using exact pain point quotes
-- Creating a complete design brief for developers
+- Writing copy using proven frameworks (PAS, AIDA, Before-After-Bridge)
+- Using exact customer language from pain points
+- Creating persuasive headlines, value props, FAQ, and CTAs
 
-**Invoke it:**
+**Invoke it FIRST (before the designer):**
+
+```
+@copywriter Write landing page copy for [App Name] - [brief description].
+```
+
+The copywriter will read 02_analysis.md automatically and output copy to `./03_copy.md`.
+
+## Subagent: Landing Page Designer
+
+Use the **@landing-page-designer** subagent to create the design brief. This agent specializes in:
+
+- Reading market analysis (02_analysis.md) and copy (03_copy.md)
+- Theme selection based on audience psychology
+- Creating visual identity specs for developers
+
+**Invoke it AFTER the copywriter:**
 
 ```
 @landing-page-designer Create a design brief for [App Name] - [brief description].
 ```
 
-The designer will read 02_analysis.md automatically and output a complete design brief.
+The designer will read both 02_analysis.md and 03_copy.md, then output a complete design brief to `./04_design_brief.md`.
 
 ## Subagent: Landing Page Developer
 
@@ -121,20 +156,25 @@ Use the **@landing-page-developer** subagent to implement the design brief as co
 - Setting up waitlist forms connected to shared backend
 - Providing complete, deployable code
 
+**IMPORTANT: The developer is NOT responsible for GitHub or deployment. They only write code.**
+
 **Invoke it AFTER the designer:**
 
 ```
 @landing-page-developer Create a landing page using the design brief in ./04_design_brief.md
 ```
 
-## Two-Step Flow
+## Three-Step Flow
 
-1. First invoke **@landing-page-designer** — they write the design brief to `./04_design_brief.md`
-2. Then invoke **@landing-page-developer** — they read `./04_design_brief.md` and implement the code
+1. First invoke **@copywriter** — they write the copy to `./03_copy.md`
+2. Then invoke **@landing-page-designer** — they read 02_analysis.md + 03_copy.md and output design brief to `./04_design_brief.md`
+3. Finally invoke **@landing-page-developer** — they read `./04_design_brief.md` and implement the code
 
 **Example full invocation:**
 
 ```
+@copywriter Write landing page copy for a chronic pain support app. The app helps people with chronic pain track symptoms and find empathetic doctors.
+
 @landing-page-designer Create a design brief for a chronic pain support app. The app helps people with chronic pain track symptoms and find empathetic doctors.
 
 @landing-page-developer Create a landing page using ./04_design_brief.md
@@ -150,13 +190,41 @@ Always start from these three core markets:
 
 ## Market Selection Process
 
-Use Python's random module to pick niches deterministically:
+**CRITICAL: You MUST use Python for EVERY selection step. Never manually choose a niche.**
 
-```bash
-python3 -c "import random; markets = ['Health', 'Wealth', 'Relationships']; print(random.choice(markets))"
-```
+The hierarchy is: Core Market → Sub-niche 1 → Sub-niche 2 → Specific Problem Area
 
-Then drill down into sub-niches using the hierarchy: Core Market → Sub-niche → Specific Problem Area
+You MUST drill 4 levels deep (Core Market + 2 Sub-niche levels + Specific Problem Area).
+
+### Step-by-Step Process:
+
+**Level 1 - Core Market:**
+
+1. Run Python to pick from the 3 core markets:
+   ```bash
+   python3 -c "import random; markets = ['Health', 'Wealth', 'Relationships']; print(random.choice(markets))"
+   ```
+2. Note the result (e.g., "Health")
+
+**Level 2 - Sub-niche 1:**
+
+1. Brainstorm 5 sub-niche ideas within the chosen core market (e.g., for Health: mental health, fitness, nutrition, sleep, chronic pain)
+2. Run Python to pick one:
+   ```bash
+   python3 -c "import random; niches = ['mental health', 'fitness', 'nutrition', 'sleep', 'chronic pain']; print(random.choice(niches))"
+   ```
+
+**Level 3 - Sub-niche 2:**
+
+1. Brainstorm 5 more specific sub-niche ideas within the chosen Sub-niche 1
+2. Run Python to pick one
+
+**Level 4 - Specific Problem Area:**
+
+1. Brainstorm 5 specific problem areas within the chosen Sub-niche 2
+2. Run Python to pick one
+
+This is your final niche to use for the rest of the pipeline.
 
 ## Architecture: Shared Backend + Multiple Frontends
 
@@ -347,12 +415,15 @@ When invoked, execute these steps in order:
 2. **Validate**: Check Google Trends for search volume and trend stability
 3. **Collect Data**: Invoke **@data-collector** to gather Reddit posts → `01_raw_data.md`
 4. **Analyze**: Invoke **@analysis-agent** to extract themes and opportunities → `02_analysis.md`
-5. **Critique**: Invoke **@critique-agent** to validate analysis → `03_critique.md`
-6. **Review**: Check 03_critique.md - if REVISIONS NEEDED, iterate
-7. **Design Brief**: Invoke **@landing-page-designer** with the approved opportunity from `02_analysis.md`
-8. **Build Landing Page**: Invoke **@landing-page-developer** with the design brief from step 7
-9. **Deploy Frontend**: Create GitHub repo, Dokploy app, deploy (no env vars needed)
-10. **Configure Domain**: Create domain entry and enable HTTPS
+5. **Ideate**: Invoke **@ideation-agent** to generate and score multiple business ideas → `02_ideas.md`
+6. **Critique**: Invoke **@critique-agent** to validate analysis and ideas → `03_critique.md`
+7. **Review**: Check 03_critique.md - if REVISIONS NEEDED, iterate
+8. **Select Idea**: Choose the best-scored idea from 02_ideas.md for development
+9. **Write Copy**: Invoke **@copywriter** with the approved opportunity from `02_ideas.md` → `03_copy.md`
+10. **Design Brief**: Invoke **@landing-page-designer** with `02_analysis.md` + `03_copy.md` → `04_design_brief.md`
+11. **Build Landing Page**: Invoke **@landing-page-developer** with the design brief from step 10
+12. **Deploy (Handled by Gold-miner, NOT developer)**: Create GitHub repo, Dokploy app, deploy
+13. **Configure Domain**: Create domain entry and enable HTTPS
 
 Return a summary of what was created, including the deployed URL.
 

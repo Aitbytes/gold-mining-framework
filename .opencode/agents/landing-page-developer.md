@@ -47,396 +47,257 @@ All landing pages use the same shared backend for waitlist functionality:
 
 ---
 
-## Input: Design Brief
+## Input: Design Brief and Business Ideas
 
-**READ THIS FIRST** — Use the Read tool to access the design brief:
+**READ THESE FIRST** — Use the Read tool to access:
 
-```
-./04_design_brief.md
-```
+1. **Design Brief:** `./04_design_brief.md` — The complete design brief from the designer (REQUIRED)
+2. **Business Ideas:** `./02_ideas.md` — The scored business idea for additional context (optional)
 
-This file contains the complete design brief from the designer.
+Key things to extract from the design brief:
 
-Key things to extract:
-
-- App name (for directory and waitlist)
-- Color palette (6 hex codes for Tailwind config)
+- App name (for directory and waitlist `projectName`)
+- Color palette (hex codes → map to Tailwind tokens)
 - Font pairing (Google Fonts)
-- Section copy (headlines, subheads, value props)
+- Section copy (headlines, subheads, value props, quotes, FAQs, testimonials)
 - Component list required
 
----
+Additional context from 02_ideas.md:
 
-## Step 1: Project Structure
-
-Create a new directory named after the app (kebab-case):
-
-```
-app-name/
-├── astro.config.mjs
-├── tailwind.config.mjs
-├── package.json
-├── Dockerfile
-└── src/
-    ├── layouts/
-    │   └── Layout.astro
-    ├── components/
-    │   ├── Header.astro
-    │   ├── Hero.astro
-    │   ├── ValueProposition.astro
-    │   ├── ProblemSolution.astro
-    │   ├── HowItWorks.astro
-    │   ├── SocialProof.astro
-    │   ├── FAQ.astro
-    │   ├── FinalCTA.astro
-    │   ├── Footer.astro
-    │   └── WaitlistForm.astro
-    ├── pages/
-    │   └── index.astro
-    └── scripts/
-        └── waitlist.ts
-```
+- The business concept and value proposition
+- Target customer description
+- Differentiation from competitors
 
 ---
 
-## Step 2: Configuration Files
+## Step 1: Copy the Base Template
 
-### package.json
+A base template already exists at:
 
-```json
-{
-  "name": "app-name",
-  "type": "module",
-  "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview"
-  },
-  "dependencies": {
-    "astro": "^4.0.0",
-    "@astrojs/tailwind": "^5.0.0",
-    "tailwindcss": "^3.4.0"
-  }
-}
+```
+/home/a8taleb/Code/test/Ideas-gold-mine/landing-page-template/
 ```
 
-### astro.config.mjs
+Copy it to a new directory named after the app (kebab-case):
+
+```bash
+cp -r /home/a8taleb/Code/test/Ideas-gold-mine/landing-page-template /path/to/your-app-name
+```
+
+Then update `package.json` — change the `name` field to match the app's kebab-case name.
+
+The template already includes the following — **do not rewrite these**:
+
+| File                                | What it does                                                |
+| ----------------------------------- | ----------------------------------------------------------- |
+| `astro.config.mjs`                  | Astro + Tailwind integration, static output                 |
+| `Dockerfile`                        | Multi-stage build → nginx. Uses `/app/dist` (critical path) |
+| `.gitignore`                        | Ignores node_modules, dist, .env                            |
+| `src/layouts/Layout.astro`          | HTML shell, OG tags, Google Fonts slot                      |
+| `src/components/WaitlistForm.astro` | Fully implemented form + API call + success/error states    |
+| `src/components/FAQ.astro`          | Accepts `items: {q, a}[]` prop                              |
+| `src/components/HowItWorks.astro`   | Accepts `steps: {step, title, outcome}[]` prop              |
+| `src/components/Testimonials.astro` | Accepts `items: {quote, name, age}[]` prop                  |
+
+---
+
+## Step 2: Customize Colors & Fonts
+
+Open `tailwind.config.mjs` and replace only the hex values with the design brief's palette. Keep token names identical:
 
 ```js
-import { defineConfig } from "astro/config";
-import tailwind from "@astrojs/tailwind";
-
-export default defineConfig({
-  integrations: [tailwind()],
-  output: "static",
-});
+colors: {
+  primary:      "#YOUR_HEX",   // Brief: Primary
+  accent:       "#YOUR_HEX",   // Brief: Accent
+  surface:      "#YOUR_HEX",   // Brief: Surface
+  "text-main":  "#YOUR_HEX",   // Brief: Text
+  "text-muted": "#YOUR_HEX",   // Brief: Text Muted
+  success:      "#YOUR_HEX",   // Brief: Success
+},
+fontFamily: {
+  heading: ['"Font From Brief"', "Georgia", "serif"],
+  body:    ['"Font From Brief"', "system-ui", "sans-serif"],
+},
 ```
 
-### tailwind.config.mjs
+Then update the Google Fonts URL in `src/layouts/Layout.astro` (look for the `<!-- Google Fonts -->` comment) to load the fonts specified in the brief.
 
-**CRITICAL:** Use the exact colors from the design brief. Map them to semantic tokens:
+Common pairings:
 
-```js
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: ["./src/**/*.{astro,html,js,ts}"],
-  theme: {
-    extend: {
-      colors: {
-        // Replace with designer's exact hex codes
-        primary: {
-          DEFAULT: "#2563EB",
-          light: "#DBEAFE",
-          dark: "#1D4ED8",
-        },
-        accent: {
-          DEFAULT: "#F97316",
-          dark: "#EA580C",
-        },
-        surface: {
-          DEFAULT: "#FFFFFF",
-          muted: "#F9FAFB",
-          border: "#E5E7EB",
-        },
-        text: {
-          DEFAULT: "#111827",
-          muted: "#6B7280",
-          inverse: "#FFFFFF",
-        },
-      },
-      fontFamily: {
-        heading: ['"DM Serif Display"', "Georgia", "serif"],
-        body: ['"DM Sans"', "system-ui", "sans-serif"],
-      },
-    },
-  },
-};
-```
+- **Playfair Display + Source Sans Pro** → `?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700`
+- **DM Serif Display + DM Sans** → `?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600`
+- **Inter only** → `?family=Inter:wght@300;400;500;600;700`
 
 ---
 
-## Step 3: Layout Component
+## Step 3: Write the Content Components
 
-### src/layouts/Layout.astro
+These do **not** exist in the template — write them fresh from the design brief:
 
-```astro
----
-interface Props {
-  title: string;
-  description: string;
-}
-const { title, description } = Astro.props;
----
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    <!-- Use fonts from design brief -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=FONT1&family=FONT2&display=swap" rel="stylesheet" />
-  </head>
-  <body class="font-body text-text bg-surface antialiased">
-    <slot />
-  </body>
-</html>
-```
+### `src/pages/index.astro`
 
----
-
-## Step 4: Waitlist Form Component
-
-### src/components/WaitlistForm.astro
-
-This component is the single source of truth for the waitlist form.
-
-```astro
----
-interface Props {
-  formId: string;
-  ctaText?: string;
-  appName: string;
-}
-const { formId, ctaText = 'Join the Waitlist', appName } = Astro.props;
----
-<form
-  class="waitlist-form flex flex-col sm:flex-row gap-2 w-full max-w-md"
-  data-form-id={formId}
-  data-app-name={appName}
->
-  <input
-    type="email"
-    placeholder="Enter your email address"
-    required
-    autocomplete="email"
-    class="flex-1 px-4 py-3 rounded-lg border-2 border-surface-border bg-surface text-text placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
-  />
-  <button
-    type="submit"
-    class="px-6 py-3 rounded-lg bg-accent text-text-inverse font-semibold hover:bg-accent-dark active:scale-95 transition-all whitespace-nowrap"
-  >
-    {ctaText}
-  </button>
-</form>
-<p id={`message-${formId}`} class="text-sm mt-2 hidden"></p>
-
-<script src="../scripts/waitlist.ts"></script>
-```
-
----
-
-## Step 5: Waitlist Script
-
-### src/scripts/waitlist.ts
-
-```ts
-const API_URL = "https://api-goldmine.aitbytes.dev";
-
-document.querySelectorAll<HTMLFormElement>(".waitlist-form").forEach((form) => {
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const email = form.querySelector<HTMLInputElement>(
-      "input[type='email']",
-    )?.value;
-    const formId = form.dataset.formId;
-    const appName = form.dataset.appName;
-    const messageEl = document.getElementById(`message-${formId}`);
-    const button = form.querySelector("button");
-
-    if (!email || !appName) return;
-
-    // Show loading state
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Joining...";
-    }
-
-    try {
-      const res = await fetch(`${API_URL}/api/join-waitlist`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, projectName: appName }),
-      });
-
-      if (res.ok) {
-        if (messageEl) {
-          messageEl.textContent = "You're on the list! We'll be in touch.";
-          messageEl.classList.remove("hidden", "text-red-600");
-          messageEl.classList.add("text-green-600");
-        }
-        form.reset();
-      } else {
-        const data = await res.json();
-        throw new Error(data.error || "Something went wrong");
-      }
-    } catch (err) {
-      if (messageEl) {
-        messageEl.textContent =
-          err instanceof Error ? err.message : "Something went wrong";
-        messageEl.classList.remove("hidden", "text-green-600");
-        messageEl.classList.add("text-red-600");
-      }
-    } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent =
-          formId === "hero" ? "Join the Waitlist" : "Join the Waitlist";
-      }
-    }
-  });
-});
-```
-
----
-
-## Step 6: Implement Each Section
-
-Use the EXACT copy from the design brief. Implement these components:
-
-### Hero.astro
-
-- Use designer's headline, subheadline, CTA text, trust indicator
-- Include WaitlistForm with formId="hero"
-- Use the specified visual approach (centered, asymmetric, etc.)
-
-### ValueProposition.astro
-
-- 3 cards with exact titles and descriptions
-- Use specified icons (emoji or SVG)
-
-### ProblemSolution.astro
-
-- 2-3 pain points with direct quotes (from design brief)
-- Corresponding solutions
-
-### HowItWorks.astro
-
-- 3 steps with titles and outcomes
-
-### SocialProof.astro
-
-- Testimonials or trust indicators
-- "Join X+ people" style social proof
-
-### FAQ.astro
-
-- 4-6 Q&A pairs from design brief
-
-### FinalCTA.astro
-
-- Include WaitlistForm with formId="bottom"
-- Use exact headline and button text
-
-### Header.astro / Footer.astro
-
-- Navigation and links
-
----
-
-## Step 7: Assemble the Page
-
-### src/pages/index.astro
+The main page. Import and compose all sections. Pass structured data (arrays for FAQs, steps, testimonials) as props to the template components.
 
 ```astro
 ---
 import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
 import ValueProposition from '../components/ValueProposition.astro';
 import ProblemSolution from '../components/ProblemSolution.astro';
 import HowItWorks from '../components/HowItWorks.astro';
-import SocialProof from '../components/SocialProof.astro';
+import Testimonials from '../components/Testimonials.astro';
 import FAQ from '../components/FAQ.astro';
 import FinalCTA from '../components/FinalCTA.astro';
-import Footer from '../components/Footer.astro';
 
-// App configuration
-const appName = "app-name";
-const title = "App Name - Tagline";
-const description = "Description from design brief";
+const APP_NAME = "your-app-name";   // kebab-case, matches backend projectName
 
-// Copy from design brief
-const heroHeadline = "Headline from design brief";
-const heroSubheadline = "Subheadline from design brief";
-const heroCtaText = "Join the Waitlist";
-const heroTrustIndicator = "Join 500+ people on the waitlist";
+const faqs = [
+  { q: "Question from brief?", a: "Answer from brief." },
+];
 
-// ... extract all copy from design brief
+const steps = [
+  { step: "Step Name", title: "Step Title", outcome: "What the user gains." },
+];
+
+const testimonials = [
+  { quote: "Quote from brief.", name: "Name", age: 30 },
+];
 ---
 
-<Layout title={title} description={description}>
-  <Header appName={appName} />
-  <main>
-    <Hero
-      headline={heroHeadline}
-      subheadline={heroSubheadline}
-      ctaText={heroCtaText}
-      trustIndicator={heroTrustIndicator}
-      appName={appName}
-    />
-    <!-- Other sections in order -->
-    <ValueProposition appName={appName} cards={[]} />
-    <ProblemSolution appName={appName} />
-    <HowItWorks appName={appName} steps={[]} />
-    <SocialProof appName={appName} />
-    <FAQ appName={appName} faqs={[]} />
-    <FinalCTA appName={appName} />
-  </main>
-  <Footer appName={appName} />
+<Layout title="App Name — Tagline" description="Meta description from brief">
+  <Hero appName={APP_NAME} />
+  <ValueProposition />
+  <ProblemSolution />
+  <HowItWorks steps={steps} />
+  <Testimonials items={testimonials} />
+  <FAQ items={faqs} />
+  <FinalCTA appName={APP_NAME} />
 </Layout>
 ```
 
 ---
 
-## Step 8: Dockerfile
+### `src/components/Hero.astro`
 
-```dockerfile
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+Headline, subheadline, CTA text, trust indicator — all from the brief. Must include `<WaitlistForm>`:
 
-FROM nginx:alpine
-COPY --from=builder /dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+```astro
+---
+import WaitlistForm from './WaitlistForm.astro';
+interface Props { appName: string; }
+const { appName } = Astro.props;
+---
+<section class="py-16 sm:py-24 px-4">
+  <div class="max-w-4xl mx-auto text-center">
+    <h1 class="font-heading text-4xl sm:text-6xl font-bold text-primary mb-6 leading-tight">
+      Headline from Brief
+    </h1>
+    <p class="text-lg sm:text-xl text-text-muted mb-10 max-w-2xl mx-auto leading-relaxed">
+      Subheadline from brief.
+    </p>
+    <WaitlistForm
+      projectName={appName}
+      buttonText="CTA Text from Brief"
+      formId="hero"
+    />
+    <p class="text-sm text-text-muted mt-6">Trust indicator from brief</p>
+  </div>
+</section>
 ```
 
 ---
 
-## Output
+### `src/components/ValueProposition.astro`
 
-Create the complete Astro project with all files. The project should be ready to:
+3 cards with titles and descriptions from the brief. Write fresh — the visual style (grid, icons, rounded corners) should match the brief's layout guidance.
 
-1. Run `npm install`
-2. Run `npm run dev` for local development
-3. Run `npm run build` for production
-4. Deploy to any static host (Vercel, Netlify, Dokploy, etc.)
+---
 
-Ensure the waitlist forms work by connecting to the shared backend API.
+### `src/components/ProblemSolution.astro`
+
+2–3 pain points with the **exact Reddit quotes** from the brief and their corresponding solutions. These verbatim quotes are what make the audience feel understood — do not paraphrase them.
+
+---
+
+### `src/components/FinalCTA.astro`
+
+Bottom CTA section. Must include `<WaitlistForm>` with `formId="bottom"` and `variant="cta"`:
+
+```astro
+---
+import WaitlistForm from './WaitlistForm.astro';
+interface Props { appName: string; }
+const { appName } = Astro.props;
+---
+<section class="py-16 sm:py-24 px-4">
+  <div class="max-w-3xl mx-auto text-center">
+    <h2 class="font-heading text-3xl sm:text-4xl font-bold text-primary mb-6">
+      Final CTA Headline from Brief
+    </h2>
+    <p class="text-lg text-text-muted mb-10">Subtext from brief.</p>
+    <WaitlistForm
+      projectName={appName}
+      buttonText="Join the Waitlist — It's Free"
+      incentiveText="Incentive text from brief (e.g. free PDF offer)"
+      variant="cta"
+      formId="bottom"
+    />
+  </div>
+</section>
+```
+
+---
+
+### `src/components/Header.astro` and `src/components/Footer.astro`
+
+Simple brand header and footer with the app name. Write per project.
+
+---
+
+## Step 4: WaitlistForm Props Reference
+
+```astro
+<WaitlistForm
+  projectName="your-app-name"        <!-- REQUIRED: kebab-case, sent to API -->
+  buttonText="Get Early Access"       <!-- optional, default: "Join the Waitlist" -->
+  incentiveText="Join 2,400+ people"  <!-- optional: shown below form -->
+  variant="hero"                      <!-- optional: "hero" | "cta", default: "hero" -->
+  formId="hero"                       <!-- recommended: unique per form on the page -->
+/>
+```
+
+If you have two forms on the same page (Hero + FinalCTA), use different `formId` values (`"hero"` and `"bottom"`). The `projectName` must be identical on both.
+
+---
+
+## Step 5: Build & Verify Locally
+
+```bash
+npm install
+npm run build   # Builds to ./dist/
+npm run preview # Preview at localhost:4321
+```
+
+Before handing off, verify:
+
+- [ ] `src/pages/index.astro` exists and imports all components
+- [ ] `src/components/Hero.astro` exists with `<WaitlistForm formId="hero">`
+- [ ] `src/components/ValueProposition.astro` exists
+- [ ] `src/components/ProblemSolution.astro` exists with exact Reddit quotes
+- [ ] `src/components/FinalCTA.astro` exists with `<WaitlistForm formId="bottom">`
+- [ ] `src/components/Header.astro` and `Footer.astro` exist
+- [ ] `tailwind.config.mjs` uses colors from the design brief
+- [ ] `src/layouts/Layout.astro` loads the correct Google Fonts
+- [ ] `package.json` `name` matches the app's kebab-case name
+- [ ] `npm run build` completes without errors
+
+---
+
+## Common Gotchas
+
+| Issue                            | Fix                                                                     |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| Tailwind classes not applying    | Check `content` in `tailwind.config.mjs` includes `*.astro`             |
+| Form shows error after submit    | Check `projectName` matches what's registered in the backend            |
+| Fonts not loading                | Verify Google Fonts URL in `Layout.astro` matches `tailwind.config.mjs` |
+| Build succeeds but page is blank | Check `index.astro` imports and that all referenced components exist    |

@@ -1,0 +1,92 @@
+---
+// ─── Testimonials — BOILERPLATE (do not modify per project) ──────────────────
+// Pass an array of {quote, name, age} objects as the `items` prop.
+//
+// Usage in index.astro:
+//
+//   import Testimonials from '../components/Testimonials.astro';
+//
+//   const testimonials = [
+//     {
+//       quote: "This changed everything for me...",
+//       name: "James",
+//       age: 28,               // optional — omit if not provided in brief
+//       role: "Designer",      // optional — shown instead of age if provided
+//     },
+//     ...
+//   ];
+//
+//   <Testimonials items={testimonials} />
+//
+// Optional props:
+//   title   — section heading (default: "What People Are Saying")
+//   bgClass — Tailwind background class (default: "bg-surface")
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface Testimonial {
+  quote: string;
+  name: string;
+  age?: number;
+  role?: string;
+}
+
+interface Props {
+  items: Testimonial[];
+  title?: string;
+  bgClass?: string;
+}
+
+const {
+  items,
+  title = "What People Are Saying",
+  bgClass = "bg-surface",
+} = Astro.props;
+---
+
+<section id="testimonials" class={`py-16 sm:py-24 px-4 ${bgClass}`}>
+  <div class="max-w-6xl mx-auto">
+    <h2 class="font-heading text-3xl sm:text-4xl font-bold text-primary text-center mb-12 sm:mb-16">
+      {title}
+    </h2>
+
+    <div class={`grid gap-6 sm:gap-8 ${items.length === 2 ? "sm:grid-cols-2 max-w-3xl mx-auto" : "sm:grid-cols-3"}`}>
+      {items.map((testimonial) => (
+        <article class="bg-white p-6 sm:p-8 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+          <!-- Opening quote mark -->
+          <div class="text-accent text-5xl font-serif leading-none mb-3 select-none" aria-hidden="true">
+            &ldquo;
+          </div>
+
+          <!-- Quote text -->
+          <blockquote class="text-text-muted leading-relaxed flex-1 mb-6">
+            {testimonial.quote}
+          </blockquote>
+
+          <!-- Attribution -->
+          <footer class="flex items-center gap-3">
+            <!-- Avatar placeholder (initials) -->
+            <div
+              class="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0"
+              aria-hidden="true"
+            >
+              <span class="text-sm font-bold text-accent">
+                {testimonial.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div>
+              <p class="font-semibold text-primary text-sm leading-tight">
+                {testimonial.name}
+                {testimonial.age && (
+                  <span class="font-normal text-text-muted">, {testimonial.age}</span>
+                )}
+              </p>
+              {testimonial.role && (
+                <p class="text-xs text-text-muted">{testimonial.role}</p>
+              )}
+            </div>
+          </footer>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

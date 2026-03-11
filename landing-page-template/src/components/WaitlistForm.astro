@@ -1,0 +1,178 @@
+---
+// ─── WaitlistForm — BOILERPLATE (do not modify per project) ──────────────────
+// This component is fully implemented and reusable across all landing pages.
+// Just pass the correct props and it handles everything.
+//
+// Props:
+//   projectName   (required) — must match the project name registered in the
+//                              shared backend. Use kebab-case (e.g. "quiet-confidence").
+//   buttonText    (optional) — defaults to "Join the Waitlist"
+//   incentiveText (optional) — small helper text shown below the form
+//   variant       (optional) — "hero" | "cta"
+//                   "hero" → lighter background, used in the hero section
+//                   "cta"  → slightly bolder treatment, used in the final CTA section
+//                   Defaults to "hero"
+//   formId        (optional) — unique id for this form instance (for the message element).
+//                   Defaults to "waitlist". Use different ids if you have multiple
+//                   forms on the same page (e.g. "hero" and "bottom").
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface Props {
+  projectName: string;
+  buttonText?: string;
+  incentiveText?: string;
+  variant?: "hero" | "cta";
+  formId?: string;
+}
+
+const {
+  projectName,
+  buttonText = "Join the Waitlist",
+  incentiveText,
+  variant = "hero",
+  formId = "waitlist",
+} = Astro.props;
+
+// Style variants — both use the same semantic Tailwind tokens so they
+// automatically pick up the per-project color palette.
+const inputClass =
+  variant === "cta"
+    ? "w-full px-4 py-3 rounded-lg border-2 border-gray-200 bg-white text-text-main placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+    : "w-full px-4 py-3 rounded-lg border-2 border-gray-200 bg-white text-text-main placeholder-text-muted focus:outline-none focus:border-accent transition-colors";
+
+const buttonClass =
+  variant === "cta"
+    ? "w-full sm:w-auto px-8 py-3 rounded-lg bg-accent text-white font-semibold hover:opacity-90 active:scale-95 transition-all whitespace-nowrap shadow-md"
+    : "w-full sm:w-auto px-8 py-3 rounded-lg bg-accent text-white font-semibold hover:opacity-90 active:scale-95 transition-all whitespace-nowrap";
+---
+
+<form
+  class="waitlist-form flex flex-col sm:flex-row gap-3 justify-center items-center w-full max-w-md mx-auto"
+  data-form-id={formId}
+  data-app-name={projectName}
+  data-button-text={buttonText}
+>
+  <input
+    type="email"
+    placeholder="Enter your email address"
+    required
+    autocomplete="email"
+    class={inputClass}
+    aria-label="Email address"
+  />
+  <button
+    type="submit"
+    class={buttonClass}
+    aria-label={buttonText}
+  >
+    {buttonText}
+  </button>
+</form>
+
+<!-- Message element — shown after submit (success or error) -->
+<p
+  id={`message-${formId}`}
+  class="text-sm text-center mt-2 hidden"
+  role="status"
+  aria-live="polite"
+></p>
+
+{incentiveText && (
+  <p class="text-sm text-text-muted text-center mt-3">
+    {incentiveText}
+  </p>
+)}
+
+<script>
+  // ── Waitlist form submission handler ────────────────────────────────────────
+  // Handles ALL .waitlist-form elements on the page in one script block.
+  // This script is inlined once per page regardless of how many forms exist.
+  // ────────────────────────────────────────────────────────────────────────────
+
+  const API_URL = "https://api-goldmine.aitbytes.dev";
+
+  function initWaitlistForms() {
+    document
+      .querySelectorAll<HTMLFormElement>(".waitlist-form")
+      .forEach((form) => {
+        // Avoid double-binding if Astro re-renders
+        if (form.dataset.initialized) return;
+        form.dataset.initialized = "true";
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const emailInput = form.querySelector<HTMLInputElement>(
+            "input[type='email']"
+          );
+          const email = emailInput?.value?.trim();
+          const formId = form.dataset.formId;
+          const appName = form.dataset.appName;
+          const originalButtonText = form.dataset.buttonText || "Join the Waitlist";
+          const messageEl = document.getElementById(`message-${formId}`);
+          const button = form.querySelector<HTMLButtonElement>("button[type='submit']");
+
+          if (!email || !appName) return;
+
+          // ── Loading state ──────────────────────────────────────────────────
+          if (button) {
+            button.disabled = true;
+            button.textContent = "Joining...";
+          }
+          if (messageEl) {
+            messageEl.classList.add("hidden");
+            messageEl.className = "text-sm text-center mt-2 hidden";
+          }
+
+          try {
+            const res = await fetch(`${API_URL}/api/join-waitlist`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, projectName: appName }),
+            });
+
+            if (res.ok) {
+              // ── Success ──────────────────────────────────────────────────
+              if (messageEl) {
+                messageEl.textContent =
+                  "🎉 You're on the list! We'll be in touch soon.";
+                messageEl.className =
+                  "text-sm text-center mt-2 text-success font-medium";
+              }
+              form.reset();
+            } else {
+              // ── API error (4xx / 5xx) ─────────────────────────────────────
+              let errorMsg = "Something went wrong. Please try again.";
+              try {
+                const data = await res.json();
+                if (data?.error) errorMsg = data.error;
+              } catch {
+                // response body not JSON — use default message
+              }
+              throw new Error(errorMsg);
+            }
+          } catch (err) {
+            // ── Network or thrown error ────────────────────────────────────
+            if (messageEl) {
+              messageEl.textContent =
+                err instanceof Error
+                  ? err.message
+                  : "Something went wrong. Please try again.";
+              messageEl.className =
+                "text-sm text-center mt-2 text-red-600 font-medium";
+            }
+          } finally {
+            // ── Restore button ─────────────────────────────────────────────
+            if (button) {
+              button.disabled = false;
+              button.textContent = originalButtonText;
+            }
+          }
+        });
+      });
+  }
+
+  // Run on initial load and after Astro view transitions
+  document.addEventListener("DOMContentLoaded", initWaitlistForms);
+  document.addEventListener("astro:page-load", initWaitlistForms);
+</script>
