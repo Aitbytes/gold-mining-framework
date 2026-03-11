@@ -39,8 +39,10 @@ You are an expert at executing the Gold Mining Framework - an automated system f
 
 **NEVER hardcode credentials in commands.** Always source the `.env` file first, then use `$VARIABLE_NAME` syntax.
 
+The `.env` file lives at the **repo root**:
+
 ```bash
-source /home/a8taleb/Code/test/Ideas-gold-mine/.env
+source .env
 ```
 
 Then use the variables in commands:
@@ -50,9 +52,50 @@ curl -H "Authorization: Bearer $RESEND_API_KEY" ...
 gh auth login --with-token <<< $GITHUB_TOKEN
 ```
 
+## Run Folder Convention
+
+**Every framework execution MUST create a dedicated run folder.** All artifacts for that run live inside it.
+
+### Naming
+
+```
+runs/<niche-slug>-<YYYY-MM-DD>/
+```
+
+Example: `runs/chronic-pain-2026-03-11/`
+
+### Structure
+
+```
+runs/<niche-slug>-<date>/
+├── 01_raw_data.md        ← data-collector output
+├── 02_analysis.md        ← analysis-agent output
+├── 02_ideas.md           ← ideation-agent output
+├── 03_critique.md        ← critique-agent output
+├── 03_copy.md            ← copywriter output
+├── 04_design_brief.md    ← landing-page-designer output
+└── site/                 ← landing page code (landing-page-developer output)
+    ├── src/
+    ├── package.json
+    ├── Dockerfile
+    └── ...
+```
+
+**Create the run folder as the very first action:**
+
+```bash
+mkdir -p runs/<niche-slug>-<YYYY-MM-DD>
+```
+
+Then pass the run folder path to every subagent so they read/write files relative to it.
+
+---
+
 ## Subagent Pipeline: Data → Analysis → Critique
 
-Use the three specialized agents in sequence for rigorous market research:
+Use the three specialized agents in sequence for rigorous market research.
+
+> **Always pass the run folder path** when invoking subagents so they know where to read and write files.
 
 ### 1. Data Collector (@data-collector)
 
@@ -66,7 +109,9 @@ Collects raw Reddit posts and comments. Specialized in:
 **Invoke it:**
 
 ```
-@data-collector Collect Reddit data for the "[NICHE]" niche. Focus on subreddits: [list], search terms: [list]. Output: 01_raw_data.md
+@data-collector Collect Reddit data for the "[NICHE]" niche. Focus on subreddits: [list], search terms: [list].
+Run folder: runs/<niche-slug>-<date>/
+Output: runs/<niche-slug>-<date>/01_raw_data.md
 ```
 
 ### 2. Analysis Agent (@analysis-agent)
@@ -80,7 +125,9 @@ Analyzes collected data using thematic analysis and JTBD framework. Specialized 
 **Invoke it:**
 
 ```
-@analysis-agent Analyze the collected data in 01_raw_data.md. Apply the methodology from reddit-researcher-framework.md. Output: 02_analysis.md
+@analysis-agent Analyze the collected data.
+Input:  runs/<niche-slug>-<date>/01_raw_data.md
+Output: runs/<niche-slug>-<date>/02_analysis.md
 ```
 
 ### 3. Critique Agent (@critique-agent)
@@ -94,7 +141,10 @@ Reviews and validates the analysis for rigor and gaps. Specialized in:
 **Invoke it:**
 
 ```
-@critique-agent Review the analysis in 02_analysis.md against the raw data in 01_raw_data.md. Output: 03_critique.md
+@critique-agent Review the analysis against the raw data.
+Input:  runs/<niche-slug>-<date>/01_raw_data.md
+        runs/<niche-slug>-<date>/02_analysis.md
+Output: runs/<niche-slug>-<date>/03_critique.md
 ```
 
 ### 4. Ideation Agent (@ideation-agent)
@@ -109,16 +159,17 @@ Generates, evaluates, and improves business ideas using proven startup framework
 **Invoke it AFTER analysis, BEFORE copywriter:**
 
 ```
-@ideation-agent Generate business ideas from the analysis in 02_analysis.md. Use the pain points to create 5+ scored ideas. Output: 02_ideas.md
+@ideation-agent Generate business ideas from the analysis.
+Input:  runs/<niche-slug>-<date>/02_analysis.md
+        runs/<niche-slug>-<date>/01_raw_data.md
+Output: runs/<niche-slug>-<date>/02_ideas.md
 ```
-
-The ideation agent will read 02_analysis.md, generate multiple business ideas, score them using the "Should I Build This?" framework, and output scored ideas to `./02_ideas.md`.
 
 ## Subagent: Copywriter
 
 Use the **@copywriter** subagent to write the landing page copy. This agent specializes in:
 
-- Reading market analysis (02_analysis.md)
+- Reading market analysis and scored ideas
 - Writing copy using proven frameworks (PAS, AIDA, Before-After-Bridge)
 - Using exact customer language from pain points
 - Creating persuasive headlines, value props, FAQ, and CTAs
@@ -127,15 +178,17 @@ Use the **@copywriter** subagent to write the landing page copy. This agent spec
 
 ```
 @copywriter Write landing page copy for [App Name] - [brief description].
+Run folder: runs/<niche-slug>-<date>/
+Input:  runs/<niche-slug>-<date>/02_ideas.md
+        runs/<niche-slug>-<date>/02_analysis.md
+Output: runs/<niche-slug>-<date>/03_copy.md
 ```
-
-The copywriter will read 02_analysis.md automatically and output copy to `./03_copy.md`.
 
 ## Subagent: Landing Page Designer
 
 Use the **@landing-page-designer** subagent to create the design brief. This agent specializes in:
 
-- Reading market analysis (02_analysis.md) and copy (03_copy.md)
+- Reading market analysis and copy
 - Theme selection based on audience psychology
 - Creating visual identity specs for developers
 
@@ -143,9 +196,12 @@ Use the **@landing-page-designer** subagent to create the design brief. This age
 
 ```
 @landing-page-designer Create a design brief for [App Name] - [brief description].
+Run folder: runs/<niche-slug>-<date>/
+Input:  runs/<niche-slug>-<date>/02_ideas.md
+        runs/<niche-slug>-<date>/02_analysis.md
+        runs/<niche-slug>-<date>/03_copy.md
+Output: runs/<niche-slug>-<date>/04_design_brief.md
 ```
-
-The designer will read both 02_analysis.md and 03_copy.md, then output a complete design brief to `./04_design_brief.md`.
 
 ## Subagent: Landing Page Developer
 
@@ -161,23 +217,39 @@ Use the **@landing-page-developer** subagent to implement the design brief as co
 **Invoke it AFTER the designer:**
 
 ```
-@landing-page-developer Create a landing page using the design brief in ./04_design_brief.md
+@landing-page-developer Create a landing page using the design brief.
+Run folder: runs/<niche-slug>-<date>/
+Input:  runs/<niche-slug>-<date>/04_design_brief.md
+        runs/<niche-slug>-<date>/02_ideas.md
+Output: runs/<niche-slug>-<date>/site/   ← all landing page code goes here
 ```
 
 ## Three-Step Flow
 
-1. First invoke **@copywriter** — they write the copy to `./03_copy.md`
-2. Then invoke **@landing-page-designer** — they read 02_analysis.md + 03_copy.md and output design brief to `./04_design_brief.md`
-3. Finally invoke **@landing-page-developer** — they read `./04_design_brief.md` and implement the code
+1. First invoke **@copywriter** — writes copy to `runs/<slug>/03_copy.md`
+2. Then invoke **@landing-page-designer** — reads analysis + copy, outputs design brief to `runs/<slug>/04_design_brief.md`
+3. Finally invoke **@landing-page-developer** — reads design brief, creates all code under `runs/<slug>/site/`
 
 **Example full invocation:**
 
 ```
-@copywriter Write landing page copy for a chronic pain support app. The app helps people with chronic pain track symptoms and find empathetic doctors.
+@copywriter Write landing page copy for a chronic pain support app.
+Run folder: runs/chronic-pain-2026-03-11/
+Input:  runs/chronic-pain-2026-03-11/02_ideas.md
+        runs/chronic-pain-2026-03-11/02_analysis.md
+Output: runs/chronic-pain-2026-03-11/03_copy.md
 
-@landing-page-designer Create a design brief for a chronic pain support app. The app helps people with chronic pain track symptoms and find empathetic doctors.
+@landing-page-designer Create a design brief for a chronic pain support app.
+Run folder: runs/chronic-pain-2026-03-11/
+Input:  runs/chronic-pain-2026-03-11/02_ideas.md
+        runs/chronic-pain-2026-03-11/02_analysis.md
+        runs/chronic-pain-2026-03-11/03_copy.md
+Output: runs/chronic-pain-2026-03-11/04_design_brief.md
 
-@landing-page-developer Create a landing page using ./04_design_brief.md
+@landing-page-developer Create a landing page using the design brief.
+Run folder: runs/chronic-pain-2026-03-11/
+Input:  runs/chronic-pain-2026-03-11/04_design_brief.md
+Output: runs/chronic-pain-2026-03-11/site/
 ```
 
 ## Core Markets
@@ -242,8 +314,8 @@ This is your final niche to use for the rest of the pipeline.
 After creating an app, you MUST set environment variables via the API:
 
 ```bash
-# Source .env first
-source /home/a8taleb/Code/test/Ideas-gold-mine/.env
+# Source .env first (from repo root)
+source .env
 
 # Update app with env vars (example for shared backend)
 curl -X POST "https://aitbytes.dev/api/trpc/application.update" \
@@ -260,8 +332,10 @@ curl -X POST "https://aitbytes.dev/api/trpc/application.update" \
 
 ### Create Repo and Push
 
+The landing page code lives at `runs/<niche-slug>-<date>/site/`. Push that subfolder as its own repo:
+
 ```bash
-cd /path/to/project
+cd runs/<niche-slug>-<date>/site
 git init
 git add .
 git commit -m "Initial commit"
@@ -272,12 +346,12 @@ gh repo create repo-name --public --source=. --description "Description" --push
 
 ### Authentication
 
-Always load from `.env` file:
+Always load from `.env` file at the repo root:
 
 ```python
 import os
 from dotenv import load_dotenv
-load_dotenv("/path/to/.env")
+load_dotenv()  # loads .env from current working directory (repo root)
 
 token = os.getenv("DOKPLOY_TOKEN")
 url = os.getenv("DOKPLOY_URL")  # e.g., https://aitbytes.dev/
@@ -395,7 +469,7 @@ response = requests.post(f"{url}/api/trpc/domain.update", headers=headers, json=
 
 ## Critical Lessons
 
-0. **Always source .env before running commands** that use tokens - use `source /path/to/.env` then `$VARIABLE` syntax
+0. **Always source .env before running commands** that use tokens - use `source .env` (from repo root) then `$VARIABLE` syntax
 1. **Always use .env with explicit path** when using dotenv
 2. **Check repo default branch** - GitHub defaults vary (`main` vs `master`)
 3. **Find GitHub provider ID** from existing working apps
@@ -413,23 +487,33 @@ When invoked, execute these steps in order:
 
 1. **Select Market**: Use random module to pick from Health/Wealth/Relationships, then drill into sub-niche
 2. **Validate**: Check Google Trends for search volume and trend stability
-3. **Collect Data**: Invoke **@data-collector** to gather Reddit posts → `01_raw_data.md`
-4. **Analyze**: Invoke **@analysis-agent** to extract themes and opportunities → `02_analysis.md`
-5. **Ideate**: Invoke **@ideation-agent** to generate and score multiple business ideas → `02_ideas.md`
-6. **Critique**: Invoke **@critique-agent** to validate analysis and ideas → `03_critique.md`
-7. **Review**: Check 03_critique.md - if REVISIONS NEEDED, iterate
-8. **Select Idea**: Choose the best-scored idea from 02_ideas.md for development
-9. **Write Copy**: Invoke **@copywriter** with the approved opportunity from `02_ideas.md` → `03_copy.md`
-10. **Design Brief**: Invoke **@landing-page-designer** with `02_analysis.md` + `03_copy.md` → `04_design_brief.md`
-11. **Build Landing Page**: Invoke **@landing-page-developer** with the design brief from step 10
-12. **Deploy (Handled by Gold-miner, NOT developer)**: Create GitHub repo, Dokploy app, deploy
-13. **Configure Domain**: Create domain entry and enable HTTPS
+3. **Create Run Folder**: `mkdir -p runs/<niche-slug>-<YYYY-MM-DD>` — all subsequent artifacts go here
+4. **Collect Data**: Invoke **@data-collector** → `runs/<slug>/01_raw_data.md`
+5. **Analyze**: Invoke **@analysis-agent** → `runs/<slug>/02_analysis.md`
+6. **Ideate**: Invoke **@ideation-agent** → `runs/<slug>/02_ideas.md`
+7. **Critique**: Invoke **@critique-agent** → `runs/<slug>/03_critique.md`
+8. **Review**: Check `runs/<slug>/03_critique.md` — if REVISIONS NEEDED, iterate
+9. **Select Idea**: Choose the best-scored idea from `runs/<slug>/02_ideas.md`
+10. **Write Copy**: Invoke **@copywriter** → `runs/<slug>/03_copy.md`
+11. **Design Brief**: Invoke **@landing-page-designer** → `runs/<slug>/04_design_brief.md`
+12. **Build Landing Page**: Invoke **@landing-page-developer** → `runs/<slug>/site/`
+13. **Deploy (Handled by Gold-miner, NOT developer)**: `cd runs/<slug>/site`, create GitHub repo, Dokploy app, deploy
+14. **Configure Domain**: Create domain entry and enable HTTPS
 
 Return a summary of what was created, including the deployed URL.
 
 ## Environment
 
-Working directory: `/home/a8taleb/Code/test/Ideas-gold-mine`
+All paths are **relative to the repo root** (`gold-mining-framework/`).
+
+| Resource              | Path                             |
+| --------------------- | -------------------------------- |
+| Environment file      | `.env`                           |
+| Reddit scraper        | `tools/reddit_scraper.py`        |
+| Python virtual env    | `.venv/`                         |
+| Landing page template | `landing-page-template/`         |
+| Run artifacts         | `runs/<niche-slug>-<date>/`      |
+| Landing page code     | `runs/<niche-slug>-<date>/site/` |
 
 Required environment variables in `.env`:
 

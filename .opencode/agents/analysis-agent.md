@@ -18,12 +18,15 @@ Analyzes collected Reddit data to extract themes, pain points, and business oppo
 
 ## Input
 
-- `01_raw_data.md` - Raw Reddit posts and comments from data-collector
-- `reddit-researcher-framework.md` - Analysis methodology reference
+The orchestrator passes the run folder path. Read files from it:
+
+- `runs/<niche-slug>-<date>/01_raw_data.md` - Raw Reddit posts and comments from data-collector
 
 ## Output
 
-- `02_analysis.md` - Thematic analysis with business opportunities
+Write to the same run folder:
+
+- `runs/<niche-slug>-<date>/02_analysis.md` - Thematic analysis with business opportunities
 
 ## Process
 

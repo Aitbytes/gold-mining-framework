@@ -25,10 +25,10 @@ Given market analysis with pain points and customer quotes, write complete landi
 
 ## Step 1: Read Business Ideas
 
-**READ THIS FIRST** — Use the Read tool to access the scored business ideas document:
+**READ THIS FIRST** — The orchestrator passes the run folder path (e.g., `runs/chronic-pain-2026-03-11/`). Use the Read tool to access the scored business ideas document:
 
 ```
-./02_ideas.md
+runs/<niche-slug>-<date>/02_ideas.md
 ```
 
 Extract:
@@ -47,7 +47,7 @@ Extract:
 For additional context on pain points and customer language, also read:
 
 ```
-./02_analysis.md
+runs/<niche-slug>-<date>/02_analysis.md
 ```
 
 This provides:
@@ -142,10 +142,10 @@ One clear ask: Join waitlist. Use urgency without pressure.
 
 ## Step 4: Output Format
 
-Write the complete copy to a markdown file:
+Write the complete copy to a markdown file inside the run folder:
 
 ```
-./03_copy.md
+runs/<niche-slug>-<date>/03_copy.md
 ```
 
 Format:

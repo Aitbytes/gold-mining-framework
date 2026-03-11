@@ -29,17 +29,17 @@ Given a business idea, market analysis, and pre-written copy, create a complete 
 
 ## Input: Business Ideas, Analysis, and Copy
 
-**READ THESE FIRST** — Use the Read tool to access:
+**READ THESE FIRST** — The orchestrator passes the run folder path (e.g., `runs/chronic-pain-2026-03-11/`). Use the Read tool to access:
 
-1. **Business Ideas:** `./02_ideas.md` — The scored business idea to build (includes target customer, value proposition, differentiation)
-2. **Market Analysis:** `./02_analysis.md` — For audience psychology and pain points (optional context)
-3. **Pre-written Copy:** `./03_copy.md` — The copy the copywriter created
+1. **Business Ideas:** `runs/<niche-slug>-<date>/02_ideas.md` — The scored business idea to build (includes target customer, value proposition, differentiation)
+2. **Market Analysis:** `runs/<niche-slug>-<date>/02_analysis.md` — For audience psychology and pain points (optional context)
+3. **Pre-written Copy:** `runs/<niche-slug>-<date>/03_copy.md` — The copy the copywriter created
 
 The designer should:
 
-- Read 02_ideas.md to understand the selected business idea and its positioning
-- Read 02_analysis.md to understand audience psychology and emotional state
-- Read 03_copy.md to get the exact copy to use in the design
+- Read `02_ideas.md` to understand the selected business idea and its positioning
+- Read `02_analysis.md` to understand audience psychology and emotional state
+- Read `03_copy.md` to get the exact copy to use in the design
 - Create a design brief that pairs the visual identity with the pre-written copy
 
 ---
@@ -77,7 +77,7 @@ Before writing any copy, reason through these questions. Your answers determine 
 
 ## Step 2: Design Brief Output
 
-**NOTE:** The copy has already been written by the copywriter in `./03_copy.md`. Read that file and incorporate the exact copy into your design brief.
+**NOTE:** The copy has already been written by the copywriter in `runs/<niche-slug>-<date>/03_copy.md`. Read that file and incorporate the exact copy into your design brief.
 
 Output a complete design brief in this format:
 
@@ -109,7 +109,7 @@ Output a complete design brief in this format:
 
 ### Copy
 
-**IMPORTANT:** Use the exact copy from `./03_copy.md` written by the copywriter. Do not rewrite the copy — only design how it should be displayed.
+**IMPORTANT:** Use the exact copy from `runs/<niche-slug>-<date>/03_copy.md` written by the copywriter. Do not rewrite the copy — only design how it should be displayed.
 
 Copy includes:
 
@@ -145,12 +145,12 @@ Copy includes:
 
 ## Output: Write to File
 
-**CRITICAL: Write the complete design brief to a markdown file.**
+**CRITICAL: Write the complete design brief to a markdown file inside the run folder.**
 
 Use the Write tool to create:
 
 ```
-./04_design_brief.md
+runs/<niche-slug>-<date>/04_design_brief.md
 ```
 
 This file will be read by the developer to implement the landing page.

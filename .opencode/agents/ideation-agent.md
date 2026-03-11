@@ -20,13 +20,17 @@ Generates, evaluates, and improves business ideas using proven startup framework
 
 ## Input
 
-- `01_raw_data.md` - Raw Reddit posts and comments
-- `02_analysis.md` - Thematic analysis with identified pain points
-- `03_critique.md` - Review feedback (if available)
+The orchestrator passes the run folder path. Read files from it:
+
+- `runs/<niche-slug>-<date>/01_raw_data.md` - Raw Reddit posts and comments
+- `runs/<niche-slug>-<date>/02_analysis.md` - Thematic analysis with identified pain points
+- `runs/<niche-slug>-<date>/03_critique.md` - Review feedback (if available)
 
 ## Output
 
-- `02_ideas.md` - Multiple scored business ideas with evaluation
+Write to the same run folder:
+
+- `runs/<niche-slug>-<date>/02_ideas.md` - Multiple scored business ideas with evaluation
 
 ## Core Philosophy
 

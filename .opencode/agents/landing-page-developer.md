@@ -49,10 +49,10 @@ All landing pages use the same shared backend for waitlist functionality:
 
 ## Input: Design Brief and Business Ideas
 
-**READ THESE FIRST** — Use the Read tool to access:
+**READ THESE FIRST** — The orchestrator passes the run folder path (e.g., `runs/chronic-pain-2026-03-11/`). Use the Read tool to access:
 
-1. **Design Brief:** `./04_design_brief.md` — The complete design brief from the designer (REQUIRED)
-2. **Business Ideas:** `./02_ideas.md` — The scored business idea for additional context (optional)
+1. **Design Brief:** `runs/<niche-slug>-<date>/04_design_brief.md` — The complete design brief from the designer (REQUIRED)
+2. **Business Ideas:** `runs/<niche-slug>-<date>/02_ideas.md` — The scored business idea for additional context (optional)
 
 Key things to extract from the design brief:
 
@@ -72,16 +72,12 @@ Additional context from 02_ideas.md:
 
 ## Step 1: Copy the Base Template
 
-A base template already exists at:
+A base template already exists at `landing-page-template/` (relative to the repo root).
 
-```
-/home/a8taleb/Code/test/Ideas-gold-mine/landing-page-template/
-```
-
-Copy it to a new directory named after the app (kebab-case):
+Copy it into the run folder's `site/` subdirectory:
 
 ```bash
-cp -r /home/a8taleb/Code/test/Ideas-gold-mine/landing-page-template /path/to/your-app-name
+cp -r landing-page-template runs/<niche-slug>-<date>/site
 ```
 
 Then update `package.json` — change the `name` field to match the app's kebab-case name.
@@ -272,7 +268,10 @@ If you have two forms on the same page (Hero + FinalCTA), use different `formId`
 
 ## Step 5: Build & Verify Locally
 
+Run these commands from inside the `site/` directory:
+
 ```bash
+cd runs/<niche-slug>-<date>/site
 npm install
 npm run build   # Builds to ./dist/
 npm run preview # Preview at localhost:4321

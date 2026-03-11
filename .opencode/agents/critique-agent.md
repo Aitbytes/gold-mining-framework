@@ -18,12 +18,16 @@ Reviews and validates the analysis output, ensuring rigor and identifying gaps.
 
 ## Input
 
-- `01_raw_data.md` - Original Reddit data
-- `02_analysis.md` - Analysis from analysis-agent
+The orchestrator passes the run folder path. Read files from it:
+
+- `runs/<niche-slug>-<date>/01_raw_data.md` - Original Reddit data
+- `runs/<niche-slug>-<date>/02_analysis.md` - Analysis from analysis-agent
 
 ## Output
 
-- `03_critique.md` - Review findings and recommendations
+Write to the same run folder:
+
+- `runs/<niche-slug>-<date>/03_critique.md` - Review findings and recommendations
 
 ## Review Dimensions
 

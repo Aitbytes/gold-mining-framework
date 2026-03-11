@@ -27,10 +27,11 @@ Given a market niche, collect Reddit posts and comments that will later be analy
 
 ## Critical Setup (NixOS/Externally Managed Python)
 
-**You MUST create a project-specific virtual environment first** before running any Python scripts:
+**You MUST create a project-specific virtual environment first** before running any Python scripts.
+
+The virtual environment lives at the **repo root** (`.venv/`). All commands below assume the repo root is the current working directory.
 
 ```bash
-cd /home/a8taleb/Code/test/Ideas-gold-mine
 mkdir -p .venv
 python3 -m venv .venv
 source .venv/bin/activate
@@ -87,10 +88,12 @@ Select 3-6 search terms that cover different aspects of the niche.
 
 ### Step 3: Collect Data via CLI
 
-Use the shared CLI tool:
+Use the shared CLI tool at `tools/reddit_scraper.py` (relative to repo root).
+
+The `--output` path must point inside the run folder provided by the orchestrator:
 
 ```bash
-python3 /home/a8taleb/Code/test/Ideas-gold-mine/reddit_scraper.py \
+python3 tools/reddit_scraper.py \
   --niche "YOUR NICHE" \
   --subreddits "sub1+sub2+sub3+sub4+sub5" \
   --terms "term1,term2,term3" \
@@ -99,7 +102,7 @@ python3 /home/a8taleb/Code/test/Ideas-gold-mine/reddit_scraper.py \
   --min-score 15 \
   --comments 15 \
   --min-comment-score 3 \
-  --output 01_raw_data.md
+  --output runs/<niche-slug>-<date>/01_raw_data.md
 ```
 
 ### Recommended Parameters
@@ -169,11 +172,13 @@ Before returning, verify:
 
 ## File Naming Convention
 
-Name output files to indicate stage:
+All output files go inside the run folder passed by the orchestrator:
 
-- `01_raw_data.md` - Raw collected data
-- `02_analysis.md` - After thematic analysis
-- `03_critique.md` - After critique/review
+```
+runs/<niche-slug>-<date>/01_raw_data.md    ← your output
+runs/<niche-slug>-<date>/02_analysis.md    ← analysis-agent writes this
+runs/<niche-slug>-<date>/03_critique.md    ← critique-agent writes this
+```
 
 ## Example Invocation
 
@@ -181,16 +186,18 @@ Name output files to indicate stage:
 Collect Reddit data for the "freelancing" niche. Focus on:
 - Subreddits: freelance, Upwork, Freelancers, Fiverr, antiwork
 - Search terms: burnout, bad clients, payment issues, platform problems
-- Output: 01_freelancing_raw.md
+Run folder: runs/freelancing-2026-03-11/
+Output: runs/freelancing-2026-03-11/01_raw_data.md
 ```
 
-Then execute:
+Then execute (from repo root):
 
 ```bash
-python3 /home/a8taleb/Code/test/Ideas-gold-mine/reddit_scraper.py \
+source .venv/bin/activate
+python3 tools/reddit_scraper.py \
   --niche "freelancing" \
   --subreddits "freelance+Upwork+Freelancers+Fiverr+antiwork" \
   --terms "burnout,bad clients,payment issues,platform problems" \
   --limit 20 --max-posts 30 --min-score 15 --comments 15 \
-  --output 01_freelancing_raw.md
+  --output runs/freelancing-2026-03-11/01_raw_data.md
 ```
