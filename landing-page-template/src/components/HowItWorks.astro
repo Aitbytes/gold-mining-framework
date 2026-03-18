@@ -43,49 +43,66 @@ const {
   sectionTitle = "How It Works",
   bgClass = "bg-white",
 } = Astro.props;
+
+// Roman numerals for an editorial feel — falls back to arabic for >6 steps
+const numerals = ["I", "II", "III", "IV", "V", "VI"];
 ---
 
 <section id="how-it-works" class={`py-16 sm:py-24 px-4 ${bgClass}`}>
-  <div class="max-w-6xl mx-auto">
-    <h2 class="font-heading text-3xl sm:text-4xl font-bold text-primary text-center mb-12 sm:mb-16">
+  <div class="max-w-5xl mx-auto">
+    <h2
+      class="font-heading text-title font-bold text-primary text-center mb-12 sm:mb-20"
+      data-reveal
+    >
       {sectionTitle}
     </h2>
 
-    <div class="grid sm:grid-cols-3 gap-8 sm:gap-12 relative">
-      <!-- Connecting line on desktop (purely decorative) -->
+    <div class="relative">
+      <!-- Vertical timeline line — mobile only -->
       <div
-        class="hidden sm:block absolute top-8 left-[calc(16.67%+2rem)] right-[calc(16.67%+2rem)] h-px bg-accent/20"
+        class="absolute left-6 top-8 bottom-8 w-px bg-gradient-to-b from-accent/40 via-accent/20 to-transparent sm:hidden"
         aria-hidden="true"
       ></div>
 
-      {steps.map((item, index) => (
-        <div class="text-center relative">
-          <!-- Step number bubble -->
-          <div class="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
-            <span class="text-2xl font-bold text-accent" aria-hidden="true">
-              {index + 1}
-            </span>
+      <div class={`grid gap-10 sm:gap-8 ${steps.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+        {steps.map((item, index) => (
+          <div
+            class="relative flex sm:flex-col items-start sm:items-center gap-5 sm:gap-0 sm:text-center group"
+            data-reveal
+            data-reveal-delay={String(Math.min(index + 1, 5))}
+          >
+            <!-- Step circle — solid accent, hover scale -->
+            <div class="flex-shrink-0 relative z-10">
+              <div class="w-12 h-12 sm:w-20 sm:h-20 sm:mx-auto rounded-2xl sm:rounded-3xl bg-accent flex items-center justify-center shadow-cta group-hover:scale-105 transition-transform duration-300">
+                <span class="text-white font-heading font-bold text-base sm:text-2xl select-none">
+                  {numerals[index] ?? String(index + 1)}
+                </span>
+              </div>
+              <!-- Soft glow halo on hover -->
+              <div
+                class="hidden sm:block absolute inset-0 rounded-3xl bg-accent/20 scale-150 blur-xl -z-10 opacity-0 group-hover:opacity-50 transition-opacity duration-300"
+                aria-hidden="true"
+              ></div>
+            </div>
+
+            <div class="flex-1 sm:mt-6">
+              <h3 class="font-heading text-lg sm:text-xl font-semibold text-primary mb-1 leading-snug">
+                {item.step}
+              </h3>
+
+              {item.title && (
+                <p class="text-sm font-medium text-accent mb-2">{item.title}</p>
+              )}
+
+              <div class="hidden sm:block w-8 h-0.5 bg-accent/40 mx-auto mb-3" aria-hidden="true"></div>
+
+              <p class="text-text-muted leading-relaxed text-sm sm:text-base">
+                {item.outcome}
+              </p>
+            </div>
           </div>
-
-          <!-- Step name (heading) -->
-          <h3 class="font-heading text-xl font-semibold text-primary mb-2">
-            {item.step}
-          </h3>
-
-          <!-- Optional subtitle -->
-          {item.title && (
-            <p class="text-sm font-medium text-accent mb-3">{item.title}</p>
-          )}
-
-          <!-- Divider -->
-          <div class="w-10 h-0.5 bg-accent/40 mx-auto mb-4" aria-hidden="true"></div>
-
-          <!-- Outcome -->
-          <p class="text-text-muted leading-relaxed text-sm sm:text-base">
-            {item.outcome}
-          </p>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   </div>
 </section>

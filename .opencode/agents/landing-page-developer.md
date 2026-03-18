@@ -59,14 +59,9 @@ Key things to extract from the design brief:
 - App name (for directory and waitlist `projectName`)
 - Color palette (hex codes → map to Tailwind tokens)
 - Font pairing (Google Fonts)
+- The **memorable element** — implement this exactly as described
 - Section copy (headlines, subheads, value props, quotes, FAQs, testimonials)
 - Component list required
-
-Additional context from 02_ideas.md:
-
-- The business concept and value proposition
-- Target customer description
-- Differentiation from competitors
 
 ---
 
@@ -84,16 +79,16 @@ Then update `package.json` — change the `name` field to match the app's kebab-
 
 The template already includes the following — **do not rewrite these**:
 
-| File                                | What it does                                                |
-| ----------------------------------- | ----------------------------------------------------------- |
-| `astro.config.mjs`                  | Astro + Tailwind integration, static output                 |
-| `Dockerfile`                        | Multi-stage build → nginx. Uses `/app/dist` (critical path) |
-| `.gitignore`                        | Ignores node_modules, dist, .env                            |
-| `src/layouts/Layout.astro`          | HTML shell, OG tags, Google Fonts slot                      |
-| `src/components/WaitlistForm.astro` | Fully implemented form + API call + success/error states    |
-| `src/components/FAQ.astro`          | Accepts `items: {q, a}[]` prop                              |
-| `src/components/HowItWorks.astro`   | Accepts `steps: {step, title, outcome}[]` prop              |
-| `src/components/Testimonials.astro` | Accepts `items: {quote, name, age}[]` prop                  |
+| File                                | What it does                                                                      |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| `astro.config.mjs`                  | Astro + Tailwind integration, static output                                       |
+| `Dockerfile`                        | Multi-stage build → nginx. Uses `/app/dist` (critical path)                       |
+| `.gitignore`                        | Ignores node_modules, dist, .env                                                  |
+| `src/layouts/Layout.astro`          | HTML shell, OG tags, Google Fonts slot, grain overlay, scroll-reveal              |
+| `src/components/WaitlistForm.astro` | Form + API call + email validation + success/error states                         |
+| `src/components/FAQ.astro`          | Animated accordion — accepts `items: {q, a}[]` prop                               |
+| `src/components/HowItWorks.astro`   | Step section with roman numerals — accepts `steps: {step, title, outcome}[]` prop |
+| `src/components/Testimonials.astro` | Cards with hover lift — accepts `items: {quote, name, age}[]` prop                |
 
 ---
 
@@ -105,7 +100,7 @@ Open `tailwind.config.mjs` and replace only the hex values with the design brief
 colors: {
   primary:      "#YOUR_HEX",   // Brief: Primary
   accent:       "#YOUR_HEX",   // Brief: Accent
-  surface:      "#YOUR_HEX",   // Brief: Surface
+  surface:      "#YOUR_HEX",   // Brief: Surface — avoid pure white
   "text-main":  "#YOUR_HEX",   // Brief: Text
   "text-muted": "#YOUR_HEX",   // Brief: Text Muted
   success:      "#YOUR_HEX",   // Brief: Success
@@ -116,13 +111,16 @@ fontFamily: {
 },
 ```
 
-Then update the Google Fonts URL in `src/layouts/Layout.astro` (look for the `<!-- Google Fonts -->` comment) to load the fonts specified in the brief.
+Then update the Google Fonts URL in `src/layouts/Layout.astro` (look for the `<!-- Google Fonts -->` comment).
+
+**AVOID** generic fonts: Inter, Roboto, Arial, Open Sans. The brief will specify a distinctive font — use it.
 
 Common pairings:
 
-- **Playfair Display + Source Sans Pro** → `?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700`
-- **DM Serif Display + DM Sans** → `?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600`
-- **Inter only** → `?family=Inter:wght@300;400;500;600;700`
+- **Playfair Display + Source Sans 3** → `?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@300;400;600`
+- **DM Serif Display + DM Sans** → `?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600`
+- **Fraunces + Plus Jakarta Sans** → `?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,700&family=Plus+Jakarta+Sans:wght@300;400;600`
+- **Syne + Instrument Sans** → `?family=Syne:wght@600;700;800&family=Instrument+Sans:wght@300;400;600`
 
 ---
 
@@ -132,11 +130,12 @@ These do **not** exist in the template — write them fresh from the design brie
 
 ### `src/pages/index.astro`
 
-The main page. Import and compose all sections. Pass structured data (arrays for FAQs, steps, testimonials) as props to the template components.
+The main page. Import and compose all sections.
 
 ```astro
 ---
 import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
 import ValueProposition from '../components/ValueProposition.astro';
 import ProblemSolution from '../components/ProblemSolution.astro';
@@ -144,6 +143,7 @@ import HowItWorks from '../components/HowItWorks.astro';
 import Testimonials from '../components/Testimonials.astro';
 import FAQ from '../components/FAQ.astro';
 import FinalCTA from '../components/FinalCTA.astro';
+import Footer from '../components/Footer.astro';
 
 const APP_NAME = "your-app-name";   // kebab-case, matches backend projectName
 
@@ -161,6 +161,7 @@ const testimonials = [
 ---
 
 <Layout title="App Name — Tagline" description="Meta description from brief">
+  <Header appName={APP_NAME} />
   <Hero appName={APP_NAME} />
   <ValueProposition />
   <ProblemSolution />
@@ -168,6 +169,7 @@ const testimonials = [
   <Testimonials items={testimonials} />
   <FAQ items={faqs} />
   <FinalCTA appName={APP_NAME} />
+  <Footer appName={APP_NAME} />
 </Layout>
 ```
 
@@ -175,7 +177,7 @@ const testimonials = [
 
 ### `src/components/Hero.astro`
 
-Headline, subheadline, CTA text, trust indicator — all from the brief. Must include `<WaitlistForm>`:
+Headline at `text-display` size, subheadline, CTA, trust indicator. Implement the brief's **memorable element** here if it applies to the hero. Must include `<WaitlistForm>`:
 
 ```astro
 ---
@@ -183,20 +185,23 @@ import WaitlistForm from './WaitlistForm.astro';
 interface Props { appName: string; }
 const { appName } = Astro.props;
 ---
-<section class="py-16 sm:py-24 px-4">
+<section class="py-20 sm:py-32 px-4">
   <div class="max-w-4xl mx-auto text-center">
-    <h1 class="font-heading text-4xl sm:text-6xl font-bold text-primary mb-6 leading-tight">
+    <!-- Use text-display for the hero h1 — dramatic, not timid -->
+    <h1 class="font-heading text-display font-bold text-primary mb-6" data-reveal>
       Headline from Brief
     </h1>
-    <p class="text-lg sm:text-xl text-text-muted mb-10 max-w-2xl mx-auto leading-relaxed">
+    <p class="text-lead text-text-muted mb-10 max-w-2xl mx-auto" data-reveal data-reveal-delay="1">
       Subheadline from brief.
     </p>
-    <WaitlistForm
-      projectName={appName}
-      buttonText="CTA Text from Brief"
-      formId="hero"
-    />
-    <p class="text-sm text-text-muted mt-6">Trust indicator from brief</p>
+    <div data-reveal data-reveal-delay="2">
+      <WaitlistForm
+        projectName={appName}
+        buttonText="CTA Text from Brief"
+        formId="hero"
+      />
+    </div>
+    <p class="text-sm text-text-muted mt-6" data-reveal data-reveal-delay="3">Trust indicator from brief</p>
   </div>
 </section>
 ```
@@ -205,13 +210,13 @@ const { appName } = Astro.props;
 
 ### `src/components/ValueProposition.astro`
 
-3 cards with titles and descriptions from the brief. Write fresh — the visual style (grid, icons, rounded corners) should match the brief's layout guidance.
+3 cards with titles and descriptions from the brief. Use `data-reveal` with staggered delays on each card. Visual style (grid, icons, rounded corners) should match the brief's layout guidance.
 
 ---
 
 ### `src/components/ProblemSolution.astro`
 
-2–3 pain points with the **exact Reddit quotes** from the brief and their corresponding solutions. These verbatim quotes are what make the audience feel understood — do not paraphrase them.
+2–3 pain points with the **exact Reddit quotes** from the brief and their corresponding solutions. These verbatim quotes are what make the audience feel understood — do not paraphrase them. Use `data-reveal` on each block.
 
 ---
 
@@ -225,19 +230,21 @@ import WaitlistForm from './WaitlistForm.astro';
 interface Props { appName: string; }
 const { appName } = Astro.props;
 ---
-<section class="py-16 sm:py-24 px-4">
+<section class="py-20 sm:py-32 px-4">
   <div class="max-w-3xl mx-auto text-center">
-    <h2 class="font-heading text-3xl sm:text-4xl font-bold text-primary mb-6">
+    <h2 class="font-heading text-title font-bold text-primary mb-6" data-reveal>
       Final CTA Headline from Brief
     </h2>
-    <p class="text-lg text-text-muted mb-10">Subtext from brief.</p>
-    <WaitlistForm
-      projectName={appName}
-      buttonText="Join the Waitlist — It's Free"
-      incentiveText="Incentive text from brief (e.g. free PDF offer)"
-      variant="cta"
-      formId="bottom"
-    />
+    <p class="text-lead text-text-muted mb-10" data-reveal data-reveal-delay="1">Subtext from brief.</p>
+    <div data-reveal data-reveal-delay="2">
+      <WaitlistForm
+        projectName={appName}
+        buttonText="Join the Waitlist — It's Free"
+        incentiveText="Incentive text from brief (e.g. free PDF offer)"
+        variant="cta"
+        formId="bottom"
+      />
+    </div>
   </div>
 </section>
 ```
@@ -250,7 +257,35 @@ Simple brand header and footer with the app name. Write per project.
 
 ---
 
-## Step 4: WaitlistForm Props Reference
+## Step 4: Typography Tokens
+
+The template provides three fluid type tokens — use them in place of fixed sizes:
+
+| Token          | Usage                                         | Rough size          |
+| -------------- | --------------------------------------------- | ------------------- |
+| `text-display` | Hero `h1` only — the largest text on the page | 3–5rem, fluid       |
+| `text-title`   | Section `h2` headings                         | 1.75–2.75rem, fluid |
+| `text-lead`    | Hero subheadline, section intros              | 1.05–1.25rem, fluid |
+
+Use `font-heading` for all headings and `font-body` (default) for body text.
+
+---
+
+## Step 5: Scroll-Reveal
+
+Add `data-reveal` to elements you want to animate in on scroll. Add `data-reveal-delay="1"` through `"5"` to stagger siblings. The observer is set up in `Layout.astro` — no imports needed.
+
+```astro
+<h2 data-reveal>Section Title</h2>
+<p data-reveal data-reveal-delay="1">Supporting text</p>
+<div data-reveal data-reveal-delay="2">Card or form</div>
+```
+
+Apply to: section headings, hero text, value prop cards, testimonials. Do **not** apply to every single element — use it for impact, not decoration.
+
+---
+
+## Step 6: WaitlistForm Props Reference
 
 ```astro
 <WaitlistForm
@@ -266,9 +301,7 @@ If you have two forms on the same page (Hero + FinalCTA), use different `formId`
 
 ---
 
-## Step 5: Build & Verify Locally
-
-Run these commands from inside the `site/` directory:
+## Step 7: Build & Verify Locally
 
 ```bash
 cd runs/<niche-slug>-<date>/site
@@ -280,23 +313,27 @@ npm run preview # Preview at localhost:4321
 Before handing off, verify:
 
 - [ ] `src/pages/index.astro` exists and imports all components
-- [ ] `src/components/Hero.astro` exists with `<WaitlistForm formId="hero">`
+- [ ] `src/components/Hero.astro` uses `text-display` for `h1` and `<WaitlistForm formId="hero">`
 - [ ] `src/components/ValueProposition.astro` exists
 - [ ] `src/components/ProblemSolution.astro` exists with exact Reddit quotes
 - [ ] `src/components/FinalCTA.astro` exists with `<WaitlistForm formId="bottom">`
 - [ ] `src/components/Header.astro` and `Footer.astro` exist
-- [ ] `tailwind.config.mjs` uses colors from the design brief
-- [ ] `src/layouts/Layout.astro` loads the correct Google Fonts
+- [ ] `tailwind.config.mjs` uses colors from the design brief (no pure white surface)
+- [ ] `src/layouts/Layout.astro` loads the correct Google Fonts (distinctive, not Inter/Roboto)
 - [ ] `package.json` `name` matches the app's kebab-case name
+- [ ] `data-reveal` applied to key elements for scroll animation
+- [ ] The brief's **memorable element** is visibly implemented
 - [ ] `npm run build` completes without errors
 
 ---
 
 ## Common Gotchas
 
-| Issue                            | Fix                                                                     |
-| -------------------------------- | ----------------------------------------------------------------------- |
-| Tailwind classes not applying    | Check `content` in `tailwind.config.mjs` includes `*.astro`             |
-| Form shows error after submit    | Check `projectName` matches what's registered in the backend            |
-| Fonts not loading                | Verify Google Fonts URL in `Layout.astro` matches `tailwind.config.mjs` |
-| Build succeeds but page is blank | Check `index.astro` imports and that all referenced components exist    |
+| Issue                            | Fix                                                                          |
+| -------------------------------- | ---------------------------------------------------------------------------- |
+| Tailwind classes not applying    | Check `content` in `tailwind.config.mjs` includes `*.astro`                  |
+| Form shows error after submit    | Check `projectName` matches what's registered in the backend                 |
+| Fonts not loading                | Verify Google Fonts URL in `Layout.astro` matches `tailwind.config.mjs`      |
+| Build succeeds but page is blank | Check `index.astro` imports and that all referenced components exist         |
+| Page looks generic               | Check the brief's memorable element is implemented; check fonts aren't Inter |
+| Scroll-reveal not firing         | Ensure `data-reveal` is on the element, not a wrapper that's always visible  |

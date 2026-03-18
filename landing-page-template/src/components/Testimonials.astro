@@ -45,26 +45,37 @@ const {
 
 <section id="testimonials" class={`py-16 sm:py-24 px-4 ${bgClass}`}>
   <div class="max-w-6xl mx-auto">
-    <h2 class="font-heading text-3xl sm:text-4xl font-bold text-primary text-center mb-12 sm:mb-16">
+    <h2
+      class="font-heading text-title font-bold text-primary text-center mb-12 sm:mb-16"
+      data-reveal
+    >
       {title}
     </h2>
 
     <div class={`grid gap-6 sm:gap-8 ${items.length === 2 ? "sm:grid-cols-2 max-w-3xl mx-auto" : "sm:grid-cols-3"}`}>
-      {items.map((testimonial) => (
-        <article class="bg-white p-6 sm:p-8 rounded-xl border border-gray-100 shadow-sm flex flex-col">
-          <!-- Opening quote mark -->
-          <div class="text-accent text-5xl font-serif leading-none mb-3 select-none" aria-hidden="true">
+      {items.map((testimonial, i) => (
+        <article
+          class="bg-white p-7 sm:p-8 rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 flex flex-col"
+          data-reveal
+          data-reveal-delay={String(Math.min(i + 1, 5))}
+        >
+          <!-- Large decorative quote mark -->
+          <div
+            class="font-heading text-7xl leading-none mb-2 select-none"
+            style="color: var(--tw-color-accent, #6C5CE7); opacity: 0.25;"
+            aria-hidden="true"
+          >
             &ldquo;
           </div>
 
           <!-- Quote text -->
-          <blockquote class="text-text-muted leading-relaxed flex-1 mb-6">
+          <blockquote class="text-text-muted leading-relaxed flex-1 mb-6 text-base">
             {testimonial.quote}
           </blockquote>
 
           <!-- Attribution -->
-          <footer class="flex items-center gap-3">
-            <!-- Avatar placeholder (initials) -->
+          <footer class="flex items-center gap-3 pt-4 border-t border-gray-100">
+            <!-- Initials avatar -->
             <div
               class="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0"
               aria-hidden="true"
@@ -81,7 +92,7 @@ const {
                 )}
               </p>
               {testimonial.role && (
-                <p class="text-xs text-text-muted">{testimonial.role}</p>
+                <p class="text-xs text-text-muted mt-0.5">{testimonial.role}</p>
               )}
             </div>
           </footer>

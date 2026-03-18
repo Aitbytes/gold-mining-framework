@@ -9,8 +9,8 @@
 //   buttonText    (optional) — defaults to "Join the Waitlist"
 //   incentiveText (optional) — small helper text shown below the form
 //   variant       (optional) — "hero" | "cta"
-//                   "hero" → lighter background, used in the hero section
-//                   "cta"  → slightly bolder treatment, used in the final CTA section
+//                   "hero" → used in the hero section
+//                   "cta"  → bolder shadow treatment, used in the final CTA section
 //                   Defaults to "hero"
 //   formId        (optional) — unique id for this form instance (for the message element).
 //                   Defaults to "waitlist". Use different ids if you have multiple
@@ -33,24 +33,21 @@ const {
   formId = "waitlist",
 } = Astro.props;
 
-// Style variants — both use the same semantic Tailwind tokens so they
-// automatically pick up the per-project color palette.
 const inputClass =
-  variant === "cta"
-    ? "w-full px-4 py-3 rounded-lg border-2 border-gray-200 bg-white text-text-main placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
-    : "w-full px-4 py-3 rounded-lg border-2 border-gray-200 bg-white text-text-main placeholder-text-muted focus:outline-none focus:border-accent transition-colors";
+  "w-full px-4 py-3.5 rounded-xl border-2 border-transparent bg-white/90 text-text-main placeholder-text-muted focus:outline-none focus:border-accent transition-all duration-200 shadow-sm text-base";
 
 const buttonClass =
   variant === "cta"
-    ? "w-full sm:w-auto px-8 py-3 rounded-lg bg-accent text-white font-semibold hover:opacity-90 active:scale-95 transition-all whitespace-nowrap shadow-md"
-    : "w-full sm:w-auto px-8 py-3 rounded-lg bg-accent text-white font-semibold hover:opacity-90 active:scale-95 transition-all whitespace-nowrap";
+    ? "w-full sm:w-auto px-8 py-3.5 rounded-xl bg-accent text-white font-semibold hover:opacity-90 hover:scale-[1.02] active:scale-95 transition-all duration-200 whitespace-nowrap shadow-cta text-base"
+    : "w-full sm:w-auto px-8 py-3.5 rounded-xl bg-accent text-white font-semibold hover:opacity-90 hover:scale-[1.02] active:scale-95 transition-all duration-200 whitespace-nowrap text-base";
 ---
 
 <form
-  class="waitlist-form flex flex-col sm:flex-row gap-3 justify-center items-center w-full max-w-md mx-auto"
+  class="waitlist-form flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center w-full max-w-md mx-auto"
   data-form-id={formId}
   data-app-name={projectName}
   data-button-text={buttonText}
+  novalidate
 >
   <input
     type="email"
@@ -72,13 +69,13 @@ const buttonClass =
 <!-- Message element — shown after submit (success or error) -->
 <p
   id={`message-${formId}`}
-  class="text-sm text-center mt-2 hidden"
+  class="text-sm text-center mt-3 hidden"
   role="status"
   aria-live="polite"
 ></p>
 
 {incentiveText && (
-  <p class="text-sm text-text-muted text-center mt-3">
+  <p class="text-sm text-text-muted text-center mt-3 leading-relaxed">
     {incentiveText}
   </p>
 )}
@@ -114,14 +111,24 @@ const buttonClass =
 
           if (!email || !appName) return;
 
+          // Basic email validation — preserve input on error (do NOT clear)
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+            if (messageEl) {
+              messageEl.textContent = "Please enter a valid email address.";
+              messageEl.className = "text-sm text-center mt-3 text-red-600 font-medium";
+            }
+            emailInput?.focus();
+            return;
+          }
+
           // ── Loading state ──────────────────────────────────────────────────
           if (button) {
             button.disabled = true;
-            button.textContent = "Joining...";
+            button.textContent = "Joining\u2026";
           }
           if (messageEl) {
-            messageEl.classList.add("hidden");
-            messageEl.className = "text-sm text-center mt-2 hidden";
+            messageEl.className = "text-sm text-center mt-3 hidden";
           }
 
           try {
@@ -134,10 +141,8 @@ const buttonClass =
             if (res.ok) {
               // ── Success ──────────────────────────────────────────────────
               if (messageEl) {
-                messageEl.textContent =
-                  "🎉 You're on the list! We'll be in touch soon.";
-                messageEl.className =
-                  "text-sm text-center mt-2 text-success font-medium";
+                messageEl.textContent = "You're on the list! We'll be in touch soon.";
+                messageEl.className = "text-sm text-center mt-3 text-success font-medium";
               }
               form.reset();
             } else {
@@ -152,14 +157,13 @@ const buttonClass =
               throw new Error(errorMsg);
             }
           } catch (err) {
-            // ── Network or thrown error ────────────────────────────────────
+            // ── Network or thrown error — preserve user's email input ───────
             if (messageEl) {
               messageEl.textContent =
                 err instanceof Error
                   ? err.message
                   : "Something went wrong. Please try again.";
-              messageEl.className =
-                "text-sm text-center mt-2 text-red-600 font-medium";
+              messageEl.className = "text-sm text-center mt-3 text-red-600 font-medium";
             }
           } finally {
             // ── Restore button ─────────────────────────────────────────────
