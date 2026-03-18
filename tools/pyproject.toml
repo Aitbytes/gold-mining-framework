@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reddit-scraper"
+version = "1.0.0"
+description = "Reddit scraper for Gold Mining Framework"
+requires-python = ">=3.10"
+dependencies = [
+    "praw>=7.0",
+    "python-dotenv>=1.0",
+    "requests>=2.28",
+]
+
+[project.scripts]
+reddit-scraper = "reddit_scraper:main"
+
+[tool.setuptools]
+py-modules = ["reddit_scraper"]
