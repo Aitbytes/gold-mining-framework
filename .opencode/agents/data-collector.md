@@ -8,6 +8,7 @@ tools:
   bash: true
   read: true
   glob: true
+  reddit: true
 permission:
   bash:
     "*": ask
@@ -86,11 +87,35 @@ Use strategic search terms to uncover different pain types:
 
 Select 3-6 search terms that cover different aspects of the niche.
 
-### Step 3: Collect Data via CLI
+### Step 3: Collect Data - BE RELENTLESS
 
-Use the shared CLI tool at `tools/reddit_scraper.py` (relative to repo root).
+**CRITICAL: You must continue collecting data across multiple queries until the data is convincing OR you have reached 5 queries.** Do NOT stop after a single query.
 
-The `--output` path must point inside the run folder provided by the orchestrator:
+**Tool Priority:**
+
+1. **FIRST: Use the `reddit` tool** (the MCP tool for Reddit scraping) - this is the preferred method
+2. **FALLBACK: Use the CLI** (`tools/reddit_scraper.py`) only if the reddit tool is unavailable or insufficient
+
+**Query Strategy:**
+
+- Execute up to 5 queries total if needed
+- After each query, assess if the data is convincing
+- Vary your search terms and subreddits with each query
+- Stop early only if you have clear, rich data with strong pain point signals
+
+**Assessing Data Quality After Each Query:**
+
+- 20+ unique posts with 15+ score? → Data likely sufficient
+- Posts from 3+ different subreddits with clear frustrations? → Data likely sufficient
+- Fewer than 20 posts, low scores, narrow subreddit coverage? → Continue querying
+
+**How to use the `reddit` tool:**
+
+```bash
+reddit --niche "YOUR NICHE" --subreddits "sub1+sub2+sub3" --terms "term1,term2" --limit 20 --max_posts 30 --min_score 15 --comments 15 --output runs/<slug>/01_raw_data.md
+```
+
+**CLI fallback command:**
 
 ```bash
 python3 tools/reddit_scraper.py \
@@ -152,6 +177,33 @@ The CLI produces this format automatically:
 ...
 ```
 
+### Step 3b: Competitor-Pattern Expansion (run after Step 3)
+
+After the initial pain-point collection, scan the collected posts in `01_raw_data.md` for any product or brand names mentioned (look for capitalized product names, URLs, phrases like "I use X", "switched to X", "X is better", "X alternative").
+
+Extract up to 5 product/brand names found. For each name, run a second scraper pass with competitor-pattern search terms:
+
+```bash
+python3 tools/reddit_scraper.py \
+  --niche "YOUR NICHE" \
+  --subreddits "sub1+sub2+sub3" \
+  --terms "[Name] vs,[Name] alternative,instead of [Name],[Name] review" \
+  --limit 10 \
+  --max-posts 15 \
+  --min-score 5 \
+  --comments 10 \
+  --min-comment-score 2 \
+  --output runs/<niche-slug>-<date>/01_raw_data.md
+```
+
+**Why lower thresholds for this pass?** Comparison posts are rarer and often have lower scores than pain-point posts. Score 5+ is sufficient for competitive signal.
+
+**Merge strategy:** The CLI appends to the output file if it already exists. Run the competitor-pattern pass after the initial pass — results will be appended automatically.
+
+**If no product names are found** in the initial data, skip this step and note: "No competitor names found in initial data — competitor-pattern expansion skipped."
+
+---
+
 ## Quality Checklist
 
 Before returning, verify:
@@ -161,6 +213,7 @@ Before returning, verify:
 - [ ] Minimum post score threshold applied (15+)
 - [ ] Comments included for each post
 - [ ] File written to disk (not just in memory)
+- [ ] Competitor-pattern expansion attempted (or skipped with reason noted)
 
 ## Data Sufficiency Assessment
 
@@ -191,19 +244,20 @@ If ANY of these conditions are met, flag as INSUFFICIENT:
 
 ### Handling Insufficient Data
 
-If initial data collection yields insufficient results, you MUST iterate automatically:
+If initial data collection yields insufficient results, you MUST continue querying:
 
-1. **First iteration**: Try different search terms, add more subreddits, or slightly lower score thresholds
-2. **Second iteration**: If still insufficient, try broader terms or alternative subreddits
-3. **After two iterations**: If still insufficient, stop and provide the niche change recommendation
+1. **Queries 1-5**: Continue varying search terms, subreddits, and score thresholds
+2. **After 5 queries**: If still insufficient, stop and provide the niche change recommendation
 
-You have up to 2 automatic retries to get sufficient data before recommending a niche change.
+**You have up to 5 queries to collect sufficient data before recommending a niche change.**
 
 ## Key Guidelines
 
-- **Always use the CLI** - Don't write custom scrapers
-- **Respect rate limits** - The CLI handles this automatically
-- **Write progressively** - CLI flushes to disk after each post
+- **Use the reddit tool FIRST** - The MCP reddit tool is the preferred method
+- **CLI is fallback only** - Use `tools/reddit_scraper.py` only if reddit tool is unavailable
+- **Be relentless** - Do not stop after one query; continue until data is convincing or 5 queries reached
+- **Respect rate limits** - The tools handle this automatically
+- **Write progressively** - Tools flush to disk after each post
 - **Higher score threshold** - 15+ ensures stronger evidence
 - **More comments** - 15 comments provides richer context
 

@@ -23,9 +23,11 @@ Given market analysis with pain points and customer quotes, write complete landi
 
 ---
 
-## Step 1: Read Business Ideas
+## Step 1: Read Business Ideas and Competitive Intelligence
 
-**READ THIS FIRST** — The orchestrator passes the run folder path (e.g., `runs/chronic-pain-2026-03-11/`). Use the Read tool to access the scored business ideas document:
+**READ THESE FIRST** — The orchestrator passes the run folder path (e.g., `runs/chronic-pain-2026-03-11/`). Use the Read tool to access:
+
+**Required:**
 
 ```
 runs/<niche-slug>-<date>/02_ideas.md
@@ -37,12 +39,31 @@ Extract:
 - Target customer description
 - Value proposition
 - Pain points with direct quotes
-- Differentiation from competitors
+- Named competitors (from the `## Competitive Landscape` section)
+- Differentiation from competitors (specific gap, not generic)
 - Revenue model
+- Pricing anchor (from competitive landscape)
+
+**Read if it exists (preferred source for competitive copy):**
+
+```
+runs/<niche-slug>-<date>/02_competitive_intelligence.md
+```
+
+If this file exists, it supersedes the competitive data in `02_ideas.md`. Extract:
+
+- **User Complaint Analysis section** — exact quotes from competitor users; use these verbatim in Problem/Solution copy
+- **Positioning Language Patterns section** — phrases competitors overuse; avoid all of them
+- **AI-washing risk flag** — if flagged YES, do not use "AI-powered" as a differentiator
+- **Market Gaps section** — the specific gaps your idea fills; these become your value prop cards
+- **Pricing Analysis table** — use the pricing anchor to write FAQ pricing copy ("Starting at less than [competitor price]" or "No [competitor limitation]")
+- **Recommended Differentiation Angles** — use the top-ranked angle as the basis for your headline
+
+If the file does not exist, fall back to the `## Competitive Landscape` section in `02_ideas.md`.
 
 ---
 
-## Step 2: Read Market Analysis (Optional Context)
+## Step 1b: Read Market Analysis (Optional Context)
 
 For additional context on pain points and customer language, also read:
 
@@ -195,6 +216,47 @@ Format:
 
 ---
 
+## Competitive Copy Checklist
+
+Run this checklist before finalising any section (when competitive intelligence is available):
+
+**Headline:**
+
+- [ ] Does it address a specific gap from the Competitive Landscape — not a generic pain point?
+- [ ] Does it avoid language that 3+ competitors already use in their headlines?
+
+**Subheadline:**
+
+- [ ] Does it expand on the primary differentiator (not just restate the headline)?
+
+**Value Props:**
+
+- [ ] Does each card address a named competitor weakness or gap?
+- [ ] Are any of the three cards generic enough that a competitor could use them unchanged? If yes, rewrite.
+
+**Problem/Solution:**
+
+- [ ] Are competitor weaknesses cited with real user language (not invented)?
+
+**FAQ:**
+
+- [ ] Include at least one "How is this different from [Competitor X]?" question when named competitors exist.
+  - Answer format: "[Competitor X] does [their thing]. We specifically [our different thing]. [Optional: quote a user complaint about Competitor X.]"
+
+---
+
+## Anti-Washing Rules
+
+These rules prevent copy that sounds differentiated but isn't:
+
+1. **Never claim "AI-powered" as a differentiator** unless AI is genuinely core to the value prop AND competitors do not already claim it. If 2+ competitors use "AI-powered" in their positioning, find a different angle.
+2. **Never claim "better"** without naming what is better and compared to what. "Better than [Competitor X] at [specific thing]" is allowed. "Better than existing solutions" is not.
+3. **Never use "unlike other solutions"** — name the competitor. "Unlike [Competitor X], which requires [their limitation]" is allowed.
+4. **Never claim "the only"** without verifying it against the Competitive Landscape. If competitors exist, this claim is false.
+5. **Never invent differentiation** — every differentiator must trace back to a named gap or competitor weakness in `02_ideas.md` or `02_competitive_intelligence.md`.
+
+---
+
 ## Key Principles
 
 1. **Use customer's exact words** — Quote directly from pain points
@@ -202,6 +264,7 @@ Format:
 3. **Be specific > generic** — "Finally prove you're not crazy" beats "Track your symptoms"
 4. **Focus on transformation** — Not features, but outcomes
 5. **One clear CTA** — Don't confuse the reader with multiple actions
+6. **Steal competitor language to counter it** — If a competitor's users complain about X, use their exact words in your copy to show you solved X
 
 ---
 

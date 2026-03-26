@@ -29,6 +29,8 @@ permission:
     "analysis-agent": allow
     "critique-agent": allow
     "ideation-agent": allow
+    "competitor-scout": allow
+    "competitive-intelligence": allow
 ---
 
 # Gold Mining Framework Agent
@@ -68,13 +70,15 @@ Example: `runs/chronic-pain-2026-03-11/`
 
 ```
 runs/<niche-slug>-<date>/
-├── 01_raw_data.md        ← data-collector output
-├── 02_analysis.md        ← analysis-agent output
-├── 02_ideas.md           ← ideation-agent output
-├── 03_critique.md        ← critique-agent output
-├── 03_copy.md            ← copywriter output
-├── 04_design_brief.md    ← landing-page-designer output
-└── site/                 ← landing page code (landing-page-developer output)
+├── 01_raw_data.md                  ← data-collector output
+├── 01_competitors.md               ← competitor-scout output
+├── 02_analysis.md                  ← analysis-agent output
+├── 02_competitive_intelligence.md  ← competitive-intelligence output
+├── 02_ideas.md                     ← ideation-agent output (reads both 02_ files)
+├── 03_critique.md                  ← critique-agent output
+├── 03_copy.md                      ← copywriter output (reads 02_competitive_intelligence.md)
+├── 04_design_brief.md              ← landing-page-designer output (reads 02_competitive_intelligence.md)
+└── site/                           ← landing page code (landing-page-developer output)
     ├── src/
     ├── package.json
     ├── Dockerfile
@@ -97,15 +101,17 @@ Use the three specialized agents in sequence for rigorous market research.
 
 > **Always pass the run folder path** when invoking subagents so they know where to read and write files.
 
-### 1. Data Collector (@data-collector)
+### 1. Data Collector (@data-collector) + Competitor Scout (@competitor-scout) — run in PARALLEL
 
-Collects raw Reddit posts and comments. Specialized in:
+These two agents run simultaneously after niche selection. Do not wait for one before starting the other.
+
+**Data Collector** collects raw Reddit posts and comments. Specialized in:
 
 - Identifying relevant subreddits
-- Strategic search terms
-- Using the CLI scraper tool
+- Strategic search terms (pain-pattern + competitor-pattern expansion)
+- **Using the reddit MCP tool first, CLI as fallback**
 - Quality filtering (score thresholds)
-- **Automatically iterating on search parameters if initial data is insufficient**
+- **Relentlessly collecting across multiple queries (up to 5) until data is convincing**
 
 **Invoke it:**
 
@@ -117,11 +123,36 @@ Output: runs/<niche-slug>-<date>/01_raw_data.md
 
 **After data collection, evaluate the results:**
 
-The data collector will automatically retry with adjusted parameters up to 2 times if initial results are insufficient. After the collector completes, check the "Data Sufficiency Assessment" section. If it still shows INSUFFICIENT, you MUST change to a different sub-niche within the same core market and re-run data collection.
+The data collector will continue querying (up to 5 times) until data is convincing. After the collector completes, check the "Data Sufficiency Assessment" section. If it still shows INSUFFICIENT, you MUST change to a different sub-niche within the same core market and re-run data collection.
 
-### 2. Analysis Agent (@analysis-agent)
+---
 
-Analyzes collected data using thematic analysis and JTBD framework. Specialized in:
+**Competitor Scout** discovers and catalogs competitors. Specialized in:
+
+- Finding direct, indirect, and substitute competitors
+- Verifying live products exist
+- Classifying by type and market signal
+- Minimum 5 verified competitors before stopping
+
+**Invoke it IN PARALLEL with data-collector:**
+
+```
+@competitor-scout Discover competitors for the "[NICHE]" niche.
+Problem statement: [one sentence describing the problem being solved]
+Target audience: [who the product is for]
+Run folder: runs/<niche-slug>-<date>/
+Output: runs/<niche-slug>-<date>/01_competitors.md
+```
+
+**Wait for BOTH agents to complete before proceeding to step 2.**
+
+---
+
+### 2. Analysis Agent (@analysis-agent) + Competitive Intelligence (@competitive-intelligence) — run in PARALLEL
+
+These two agents run simultaneously after step 1 completes. Do not wait for one before starting the other.
+
+**Analysis Agent** analyzes collected Reddit data. Specialized in:
 
 - Braun & Clarke thematic analysis methodology
 - Customer journey mapping
@@ -134,6 +165,30 @@ Analyzes collected data using thematic analysis and JTBD framework. Specialized 
 Input:  runs/<niche-slug>-<date>/01_raw_data.md
 Output: runs/<niche-slug>-<date>/02_analysis.md
 ```
+
+---
+
+**Competitive Intelligence Agent** performs deep competitive analysis. Specialized in:
+
+- Pricing intelligence (verified from competitor pricing pages)
+- Positioning language pattern extraction
+- User complaint mining (G2/Capterra + Reddit)
+- Feature matrix and gap identification
+- White Space analysis (4 gap types)
+- Competitive intensity scoring
+
+**Invoke it IN PARALLEL with analysis-agent:**
+
+```
+@competitive-intelligence Analyze competitors for the "[NICHE]" niche.
+Input:  runs/<niche-slug>-<date>/01_competitors.md
+        runs/<niche-slug>-<date>/01_raw_data.md
+Output: runs/<niche-slug>-<date>/02_competitive_intelligence.md
+```
+
+**Wait for BOTH agents to complete before proceeding to step 3.**
+
+---
 
 ### 3. Critique Agent (@critique-agent)
 
@@ -157,16 +212,18 @@ Output: runs/<niche-slug>-<date>/03_critique.md
 Generates, evaluates, and improves business ideas using proven startup frameworks. Specialized in:
 
 - Generating multiple ideas per pain point
-- "Should I Build This?" scoring framework
+- Competitive landscape research (Step 1.5) — reads `02_competitive_intelligence.md` if available, falls back to web research
+- "Should I Build This?" scoring framework — Uniqueness and Defensibility anchored to competitive data
 - Y Combinator criteria validation
-- Competition research and differentiation
+- No-competition red-flag detection
 
-**Invoke it AFTER analysis, BEFORE copywriter:**
+**Invoke it AFTER both analysis-agent AND competitive-intelligence complete:**
 
 ```
 @ideation-agent Generate business ideas from the analysis.
 Input:  runs/<niche-slug>-<date>/02_analysis.md
         runs/<niche-slug>-<date>/01_raw_data.md
+        runs/<niche-slug>-<date>/02_competitive_intelligence.md
 Output: runs/<niche-slug>-<date>/02_ideas.md
 ```
 
@@ -186,6 +243,7 @@ Use the **@copywriter** subagent to write the landing page copy. This agent spec
 Run folder: runs/<niche-slug>-<date>/
 Input:  runs/<niche-slug>-<date>/02_ideas.md
         runs/<niche-slug>-<date>/02_analysis.md
+        runs/<niche-slug>-<date>/02_competitive_intelligence.md
 Output: runs/<niche-slug>-<date>/03_copy.md
 ```
 
@@ -205,6 +263,7 @@ Run folder: runs/<niche-slug>-<date>/
 Input:  runs/<niche-slug>-<date>/02_ideas.md
         runs/<niche-slug>-<date>/02_analysis.md
         runs/<niche-slug>-<date>/03_copy.md
+        runs/<niche-slug>-<date>/02_competitive_intelligence.md
 Output: runs/<niche-slug>-<date>/04_design_brief.md
 ```
 
@@ -229,10 +288,10 @@ Input:  runs/<niche-slug>-<date>/04_design_brief.md
 Output: runs/<niche-slug>-<date>/site/   ← all landing page code goes here
 ```
 
-## Three-Step Flow
+## Three-Step Flow (Copy → Design → Build)
 
-1. First invoke **@copywriter** — writes copy to `runs/<slug>/03_copy.md`
-2. Then invoke **@landing-page-designer** — reads analysis + copy, outputs design brief to `runs/<slug>/04_design_brief.md`
+1. First invoke **@copywriter** — reads ideas + analysis + competitive intelligence, writes copy to `runs/<slug>/03_copy.md`
+2. Then invoke **@landing-page-designer** — reads analysis + copy + competitive intelligence, outputs design brief to `runs/<slug>/04_design_brief.md`
 3. Finally invoke **@landing-page-developer** — reads design brief, creates all code under `runs/<slug>/site/`
 
 **Example full invocation:**
@@ -242,6 +301,7 @@ Output: runs/<niche-slug>-<date>/site/   ← all landing page code goes here
 Run folder: runs/chronic-pain-2026-03-11/
 Input:  runs/chronic-pain-2026-03-11/02_ideas.md
         runs/chronic-pain-2026-03-11/02_analysis.md
+        runs/chronic-pain-2026-03-11/02_competitive_intelligence.md
 Output: runs/chronic-pain-2026-03-11/03_copy.md
 
 @landing-page-designer Create a design brief for a chronic pain support app.
@@ -249,6 +309,7 @@ Run folder: runs/chronic-pain-2026-03-11/
 Input:  runs/chronic-pain-2026-03-11/02_ideas.md
         runs/chronic-pain-2026-03-11/02_analysis.md
         runs/chronic-pain-2026-03-11/03_copy.md
+        runs/chronic-pain-2026-03-11/02_competitive_intelligence.md
 Output: runs/chronic-pain-2026-03-11/04_design_brief.md
 
 @landing-page-developer Create a landing page using the design brief.
@@ -493,19 +554,34 @@ When invoked, execute these steps in order:
 1. **Select Market**: Use random module to pick from Health/Wealth/Relationships, then drill into sub-niche
 2. **Validate**: Check Google Trends for search volume and trend stability
 3. **Create Run Folder**: `mkdir -p runs/<niche-slug>-<YYYY-MM-DD>` — all subsequent artifacts go here
-4. **Collect Data**: Invoke **@data-collector** → `runs/<slug>/01_raw_data.md`
-5. **Evaluate Data Sufficiency**: Check the "Data Sufficiency Assessment" section in the output. If INSUFFICIENT:
+
+4. **[PARALLEL] Collect Data + Scout Competitors**:
+   - Invoke **@data-collector** → `runs/<slug>/01_raw_data.md`
+   - Invoke **@competitor-scout** (simultaneously) → `runs/<slug>/01_competitors.md`
+   - Wait for BOTH to complete before proceeding
+
+5. **Evaluate Data Sufficiency**: Check the "Data Sufficiency Assessment" section in the data-collector output. If INSUFFICIENT:
    - Select a new sub-niche from the same core market
    - Delete the run folder and create a new one for the new niche
-   - Re-run data collection with the new niche
+   - Re-run both data-collector AND competitor-scout with the new niche
    - Repeat until sufficient data is obtained
-6. **Analyze**: Invoke **@analysis-agent** → `runs/<slug>/02_analysis.md`
+
+6. **[PARALLEL] Analyze + Build Competitive Intelligence**:
+   - Invoke **@analysis-agent** → `runs/<slug>/02_analysis.md`
+   - Invoke **@competitive-intelligence** (simultaneously) → `runs/<slug>/02_competitive_intelligence.md`
+   - Wait for BOTH to complete before proceeding
+
 7. **Ideate**: Invoke **@ideation-agent** → `runs/<slug>/02_ideas.md`
+   - This agent reads `02_competitive_intelligence.md` automatically (Step 1.5)
+   - Uniqueness and Defensibility scores are now anchored to real competitor data
+
 8. **Critique**: Invoke **@critique-agent** → `runs/<slug>/03_critique.md`
-9. **Review**: Check `runs/<slug>/03_critique.md` — if REVISIONS NEEDED, iterate
+9. **Review**: Check `runs/<slug>/03_critique.md` — **if REVISIONS NEEDED, do NOT hesitate to walk back.** Re-run analysis or even data collection as needed. Iterate until the critique shows CONFIDENT.
 10. **Select Idea**: Choose the best-scored idea from `runs/<slug>/02_ideas.md`
 11. **Write Copy**: Invoke **@copywriter** → `runs/<slug>/03_copy.md`
+    - Pass `02_competitive_intelligence.md` as input — copywriter uses competitor weaknesses and positioning patterns
 12. **Design Brief**: Invoke **@landing-page-designer** → `runs/<slug>/04_design_brief.md`
+    - Pass `02_competitive_intelligence.md` as input — designer runs competitor visual audit before theme selection
 13. **Build Landing Page**: Invoke **@landing-page-developer** → `runs/<slug>/site/`
 14. **Deploy (Handled by Gold-miner, NOT developer)**: `cd runs/<slug>/site`, create GitHub repo, Dokploy app, deploy
 15. **Configure Domain**: Create domain entry and enable HTTPS
