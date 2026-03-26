@@ -105,6 +105,7 @@ Collects raw Reddit posts and comments. Specialized in:
 - Strategic search terms
 - Using the CLI scraper tool
 - Quality filtering (score thresholds)
+- **Automatically iterating on search parameters if initial data is insufficient**
 
 **Invoke it:**
 
@@ -113,6 +114,10 @@ Collects raw Reddit posts and comments. Specialized in:
 Run folder: runs/<niche-slug>-<date>/
 Output: runs/<niche-slug>-<date>/01_raw_data.md
 ```
+
+**After data collection, evaluate the results:**
+
+The data collector will automatically retry with adjusted parameters up to 2 times if initial results are insufficient. After the collector completes, check the "Data Sufficiency Assessment" section. If it still shows INSUFFICIENT, you MUST change to a different sub-niche within the same core market and re-run data collection.
 
 ### 2. Analysis Agent (@analysis-agent)
 
@@ -489,16 +494,21 @@ When invoked, execute these steps in order:
 2. **Validate**: Check Google Trends for search volume and trend stability
 3. **Create Run Folder**: `mkdir -p runs/<niche-slug>-<YYYY-MM-DD>` — all subsequent artifacts go here
 4. **Collect Data**: Invoke **@data-collector** → `runs/<slug>/01_raw_data.md`
-5. **Analyze**: Invoke **@analysis-agent** → `runs/<slug>/02_analysis.md`
-6. **Ideate**: Invoke **@ideation-agent** → `runs/<slug>/02_ideas.md`
-7. **Critique**: Invoke **@critique-agent** → `runs/<slug>/03_critique.md`
-8. **Review**: Check `runs/<slug>/03_critique.md` — if REVISIONS NEEDED, iterate
-9. **Select Idea**: Choose the best-scored idea from `runs/<slug>/02_ideas.md`
-10. **Write Copy**: Invoke **@copywriter** → `runs/<slug>/03_copy.md`
-11. **Design Brief**: Invoke **@landing-page-designer** → `runs/<slug>/04_design_brief.md`
-12. **Build Landing Page**: Invoke **@landing-page-developer** → `runs/<slug>/site/`
-13. **Deploy (Handled by Gold-miner, NOT developer)**: `cd runs/<slug>/site`, create GitHub repo, Dokploy app, deploy
-14. **Configure Domain**: Create domain entry and enable HTTPS
+5. **Evaluate Data Sufficiency**: Check the "Data Sufficiency Assessment" section in the output. If INSUFFICIENT:
+   - Select a new sub-niche from the same core market
+   - Delete the run folder and create a new one for the new niche
+   - Re-run data collection with the new niche
+   - Repeat until sufficient data is obtained
+6. **Analyze**: Invoke **@analysis-agent** → `runs/<slug>/02_analysis.md`
+7. **Ideate**: Invoke **@ideation-agent** → `runs/<slug>/02_ideas.md`
+8. **Critique**: Invoke **@critique-agent** → `runs/<slug>/03_critique.md`
+9. **Review**: Check `runs/<slug>/03_critique.md` — if REVISIONS NEEDED, iterate
+10. **Select Idea**: Choose the best-scored idea from `runs/<slug>/02_ideas.md`
+11. **Write Copy**: Invoke **@copywriter** → `runs/<slug>/03_copy.md`
+12. **Design Brief**: Invoke **@landing-page-designer** → `runs/<slug>/04_design_brief.md`
+13. **Build Landing Page**: Invoke **@landing-page-developer** → `runs/<slug>/site/`
+14. **Deploy (Handled by Gold-miner, NOT developer)**: `cd runs/<slug>/site`, create GitHub repo, Dokploy app, deploy
+15. **Configure Domain**: Create domain entry and enable HTTPS
 
 Return a summary of what was created, including the deployed URL.
 

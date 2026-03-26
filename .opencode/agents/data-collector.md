@@ -162,6 +162,43 @@ Before returning, verify:
 - [ ] Comments included for each post
 - [ ] File written to disk (not just in memory)
 
+## Data Sufficiency Assessment
+
+After collecting data, you MUST evaluate whether there is sufficient data to proceed with analysis. Add this assessment at the end of your output:
+
+```markdown
+## Data Sufficiency Assessment
+
+- Total posts collected: [X]
+- Unique subreddits represented: [X]
+- Posts with 15+ score: [X]
+- Clear pain point signals: [YES/NO]
+- RECOMMENDATION: [PROCEED / ITERATE / CHANGE NICHE]
+
+### Reasoning:
+
+[Explain why the data is sufficient or insufficient]
+```
+
+### Insufficient Data Thresholds
+
+If ANY of these conditions are met, flag as INSUFFICIENT:
+
+- Less than 20 unique posts collected
+- Data from fewer than 2 different subreddits
+- Less than 10 posts with 15+ score
+- No clear pain point signals or repeated frustrations
+
+### Handling Insufficient Data
+
+If initial data collection yields insufficient results, you MUST iterate automatically:
+
+1. **First iteration**: Try different search terms, add more subreddits, or slightly lower score thresholds
+2. **Second iteration**: If still insufficient, try broader terms or alternative subreddits
+3. **After two iterations**: If still insufficient, stop and provide the niche change recommendation
+
+You have up to 2 automatic retries to get sufficient data before recommending a niche change.
+
 ## Key Guidelines
 
 - **Always use the CLI** - Don't write custom scrapers
