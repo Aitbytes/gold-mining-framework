@@ -513,7 +513,7 @@ data = {
     "json": {
         "host": "appname.aitbytes.dev",
         "applicationId": "app-id",
-        "port": 3000
+        "port": 80
     }
 }
 response = requests.post(f"{url}/api/trpc/domain.create", headers=headers, json=data)
@@ -583,8 +583,10 @@ When invoked, execute these steps in order:
 12. **Design Brief**: Invoke **@landing-page-designer** → `runs/<slug>/04_design_brief.md`
     - Pass `02_competitive_intelligence.md` as input — designer runs competitor visual audit before theme selection
 13. **Build Landing Page**: Invoke **@landing-page-developer** → `runs/<slug>/site/`
-14. **Deploy (Handled by Gold-miner, NOT developer)**: `cd runs/<slug>/site`, create GitHub repo, Dokploy app, deploy
-15. **Configure Domain**: Create domain entry and enable HTTPS
+14. **Verify Build Locally**: `cd runs/<slug>/site && npm install && npm run build && npm run preview`
+    - **CRITICAL: The build MUST succeed before proceeding. If build fails, do not push — have the developer fix errors first.**
+15. **Deploy (Handled by Gold-miner, NOT developer)**: `cd runs/<slug>/site`, create GitHub repo, Dokploy app, deploy
+16. **Configure Domain**: Create domain entry and enable HTTPS
 
 Return a summary of what was created, including the deployed URL.
 

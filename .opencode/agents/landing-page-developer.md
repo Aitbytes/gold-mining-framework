@@ -324,6 +324,9 @@ Before handing off, verify:
 - [ ] `data-reveal` applied to key elements for scroll animation
 - [ ] The brief's **memorable element** is visibly implemented
 - [ ] `npm run build` completes without errors
+- [ ] `npm run preview` shows the page loads without console errors
+
+**IF THE BUILD FAILS, YOU MUST FIX THE ERRORS BEFORE COMPLETING. Do not skip or hand off a broken build.**
 
 ---
 
